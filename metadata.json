@@ -1,0 +1,7 @@
+{
+  "name": "CEM Acta Manager",
+  "description": "Sistema profesional de gestión y generación de actas de entrega de equipos para el Comité de Estudios Médicos (CEM). Permite la creación, firma digital y exportación de documentos con un diseño idéntico al formato institucional.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
