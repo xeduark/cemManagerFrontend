@@ -2,6 +2,8 @@ import React from "react";
 import { BrainCircuit, Loader2, Check } from "lucide-react";
 import { ActaData } from "../../../types";
 import { ACCESORIOS_DISPONIBLES } from "../../../constants";
+import { getSedes } from "../../services/api";
+import Select from "react-select";
 
 interface ActaFormProps {
   acta: ActaData;
@@ -24,6 +26,32 @@ const ActaForm: React.FC<ActaFormProps> = ({
   onSmartAI,
   onPreview,
 }) => {
+  // color de fondo para inputs
+  const inputBg = "#1e293b"; // slate-800
+  const inputLight = "#f9fafb"; // gray-50
+  const inputBorder = "#e5e7eb3a"; // gray-200 with opacity
+
+  //aqui empieza el estado para cargar las sedes
+
+  const [sedes, setSedes] = React.useState<any[]>([]);
+  const [loadingSedes, setLoadingSedes] = React.useState(true);
+
+  // cargar sedes al montar el componente
+  React.useEffect(() => {
+    const fetchSedes = async () => {
+      try {
+        const data = await getSedes();
+        setSedes(data);
+      } catch (error) {
+        console.error("Error cargando sedes", error);
+      } finally {
+        setLoadingSedes(false);
+      }
+    };
+
+    fetchSedes();
+  }, []);
+
   const toggleAccessory = (acc: string) => {
     const currentList = acta.accesorios ? acta.accesorios.split(", ") : [];
     let newList;
@@ -43,14 +71,14 @@ const ActaForm: React.FC<ActaFormProps> = ({
           Datos del Destinatario
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-2">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">
+          <div className="space-y-2 ">
+            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 ">
               Nombre Completo
             </label>
             <input
               type="text"
               required
-              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500  rounded-2xl px-5 py-4 text-sm font-bold uppercase outline-none transition-all shadow-inner"
+              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500  rounded-2xl px-5 py-4 text-sm font-bold uppercase outline-none transition-all shadow-inner hover:border-gray-200 dark:hover:border-slate-700"
               value={acta.nombre}
               onChange={(e) => setActa({ ...acta, nombre: e.target.value })}
               placeholder="Ej: CARLOS MARTINEZ"
@@ -63,7 +91,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
             <input
               type="number"
               required
-              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500  rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner"
+              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500  rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner hover:border-gray-200 dark:hover:border-slate-700"
               value={acta.recibidoPorCC}
               onChange={(e) =>
                 setActa({ ...acta, recibidoPorCC: e.target.value })
@@ -77,25 +105,61 @@ const ActaForm: React.FC<ActaFormProps> = ({
             <input
               type="text"
               required
-              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner"
+              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner hover:border-gray-200 dark:hover:border-slate-700"
               value={acta.cargo}
               onChange={(e) => setActa({ ...acta, cargo: e.target.value })}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 ">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">
               Sede Destino
             </label>
-            <select
-              className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner"
-              value={acta.sede}
-              onChange={(e) => setActa({ ...acta, sede: e.target.value })}
-            >
-              <option value="">Seleccionar...</option>
-              <option value="SEDES CASA-CAMPESTRE">CASA-CAMPESTRE</option>
-              <option value="SEDE PRINCIPAL">SEDE PRINCIPAL</option>
-              <option value="SEDE ADMINISTRATIVA">SEDE ADMINISTRATIVA</option>
-            </select>
+            <Select
+              placeholder={
+                loadingSedes ? "Cargando sedes..." : "Seleccionar sede..."
+              }
+              options={sedes.map((sede) => ({
+                value: sede.nombre,
+                label: sede.nombre,
+              }))}
+              value={acta.sede ? { value: acta.sede, label: acta.sede } : null}
+              onChange={(option) =>
+                setActa({ ...acta, sede: option?.value || "" })
+              }
+              isSearchable
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  backgroundColor: inputBg,
+                  border: "2px solid transparent",
+                  borderRadius: "16px",
+                  padding: "8px 10px",
+                  minHeight: "56px",
+                  color: "white",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+                  borderColor: state.isFocused ? "#3b82f6" : "transparent",
+                  "&:hover": {
+                    borderColor: inputBorder,
+                  },
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  color: "white",
+                  fontWeight: "700",
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#94a3b8",
+                  fontWeight: "700",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  backgroundColor: "#1e293b",
+                  color: "white",
+                  borderRadius: "12px",
+                }),
+              }}
+            />
           </div>
         </div>
 
@@ -107,12 +171,12 @@ const ActaForm: React.FC<ActaFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                Equipo / Modelo
+                Equipo / Placa
               </label>
               <input
                 type="text"
                 required
-                className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold uppercase outline-none shadow-inner"
+                className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold uppercase outline-none shadow-inner hover:border-gray-200 dark:hover:border-slate-700"
                 value={acta.equipo}
                 onChange={(e) => setActa({ ...acta, equipo: e.target.value })}
               />
@@ -124,7 +188,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
               <input
                 type="text"
                 required
-                className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner"
+                className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner hover:border-gray-200 dark:hover:border-slate-700"
                 value={acta.marca}
                 onChange={(e) => setActa({ ...acta, marca: e.target.value })}
               />
@@ -136,9 +200,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
               </label>
               <div className="flex flex-wrap gap-3">
                 {ACCESORIOS_DISPONIBLES.map((acc) => {
-                  const isSelected = acta.accesorios
-                    ?.split(", ")
-                    .includes(acc);
+                  const isSelected = acta.accesorios?.split(", ").includes(acc);
                   return (
                     <button
                       key={acc}
@@ -165,11 +227,23 @@ const ActaForm: React.FC<ActaFormProps> = ({
             Entregado por
           </label>
 
-          <select
-            value={selectedUserId}
-            required
-            onChange={(e) => {
-              const userId = e.target.value;
+          <Select
+            placeholder="Seleccionar usuario..."
+            options={users.map((user) => ({
+              value: user.id,
+              label: user.nombre,
+            }))}
+            value={
+              selectedUserId
+                ? {
+                    value: selectedUserId,
+                    label: users.find((u) => u.id.toString() === selectedUserId)
+                      ?.nombre,
+                  }
+                : null
+            }
+            onChange={(option) => {
+              const userId = option?.value?.toString() || "";
               setSelectedUserId(userId);
 
               const user = users.find((u) => u.id.toString() === userId);
@@ -177,21 +251,47 @@ const ActaForm: React.FC<ActaFormProps> = ({
               if (user) {
                 setActa({
                   ...acta,
-                  entregadoPorNombre: `${user.nombre}`,
-                  entregadoPorCC: `${user.dni}`,
+                  entregadoPorNombre: user.nombre,
+                  entregadoPorCC: user.dni,
                 });
               }
             }}
-            className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-2xl px-5 py-4 text-sm font-bold outline-none shadow-inner"
-          >
-            <option value="">Seleccionar usuario...</option>
+            isSearchable
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                backgroundColor: inputBg,
+                border: "2px solid transparent",
+                borderRadius: "16px",
+                padding: "8px 10px",
+                minHeight: "56px",
+                color: "white",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+                borderColor: state.isFocused ? "#3b82f6" : "transparent",
+                cursor: "pointer",
+                "&:hover": {
+                  borderColor: inputBorder,
+                },
+              }),
 
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.nombre}
-              </option>
-            ))}
-          </select>
+              singleValue: (base) => ({
+                ...base,
+                color: "white",
+                fontWeight: "700",
+              }),
+              placeholder: (base) => ({
+                ...base,
+                color: "#94a3b8",
+                fontWeight: "700",
+              }),
+              menu: (base) => ({
+                ...base,
+                backgroundColor: inputBg,
+                color: "white",
+                borderRadius: "12px",
+              }),
+            }}
+          />
         </div>
 
         <div className="mt-12 pt-12 border-t border-gray-50 dark:border-slate-800">
@@ -214,7 +314,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
             </button>
           </div>
           <textarea
-            className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-[2.5rem] px-8 py-7 text-sm font-medium outline-none min-h-[160px] shadow-inner"
+            className="w-full bg-gray-50 dark:bg-slate-800 dark:text-white border-2 border-transparent focus:border-blue-500 rounded-[2.5rem] px-8 py-7 text-sm font-medium outline-none min-h-[160px] shadow-inner hover:border-gray-200 dark:hover:border-slate-700 transition-all resize-none"
             placeholder="Escribe el estado del equipo aquí..."
             value={acta.observaciones}
             onChange={(e) =>
