@@ -1,16 +1,41 @@
 import React from "react";
-import { useEffect, useState } from "react";
 import { ActaData } from "../../../types";
 import { CEM_HEADER_CONFIG } from "../../../constants";
-import { getSystemUsers } from "../../services/user.service";
 
-interface ActaPreviewProps {
+export interface ActaPreviewProps {
   data: ActaData;
+  handlePrint?: () => void;
+  triggerUpload?: (actaId: string) => void;
+
 }
-const ActaPreview: React.FC<ActaPreviewProps> = ({ data }) => {
+
+const ActaPreview: React.FC<ActaPreviewProps> = ({
+  data,
+  handlePrint,
+  triggerUpload
+}) => {
+  console.log("Número de acta:", data.actaNumber);
   return (
     <div className="paper w-full max-w-[800px] mx-auto bg-white p-[40px] shadow-2xl border border-gray-200 text-[12px] font-sans leading-relaxed min-h-[1050px] relative text-black">
       {/* Header Table */}
+      <div className="mt-4 flex gap-4">
+        {handlePrint && (
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Imprimir
+          </button>
+        )}
+        {triggerUpload && (
+          <button
+            onClick={() => triggerUpload(data.id)}
+            className="px-4 py-2 bg-green-600 text-white rounded"
+          >
+            Subir Escaneo
+          </button>
+        )}
+      </div>
       <table className="w-full border-collapse border border-black mb-6">
         <tbody>
           <tr>
@@ -73,7 +98,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({ data }) => {
       {/* Main Form Fields */}
       <div className="border border-black mb-4">
         {[
-          { label: "Nombre", value: data.nombre },
+          { label: "Nombre", value: data.recibidoPorNombre },
           { label: "Cargo", value: data.cargo },
           { label: "Sede", value: data.sede },
           { label: "Equipo:", value: data.equipo },
@@ -120,7 +145,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({ data }) => {
             <div className="flex gap-1">
               <span className="font-bold">Nombre:</span>{" "}
               <span className="uppercase">
-                {data.recibidoPorNombre || data.nombre}
+                {data.recibidoPorNombre}
               </span>
             </div>
             <div className="flex gap-1">
@@ -190,7 +215,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({ data }) => {
             CONTROLADA.
           </div>
           <div className="text-[10px] font-black">
-            CEM - ACTA No. S{data.actaNumber}
+            CEM - ACTA No. {data.actaNumber}
           </div>
         </div>
       </div>

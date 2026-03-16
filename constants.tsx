@@ -30,6 +30,6 @@ export const INITIAL_ACTA_DATA = {
   recibidoPorCC: '',
   entregadoPorNombre: '',
   entregadoPorCC: '',
-  vistoBueno: 'Juan David Orozco',
+  vistoBueno: 'Isaías Quintero',
   status: 'draft' as const,
 };

@@ -3,7 +3,8 @@ export interface ActaData {
   id: string;
   actaNumber: string;
   fecha: string;
-  nombre: string;
+  recibidoPorNombre: string;
+  recibidoPorCC: string;
   cargo: string;
   sede: string;
   equipo: string;
@@ -11,8 +12,6 @@ export interface ActaData {
   accesorios: string;
   estado: string;
   observaciones: string;
-  recibidoPorNombre: string;
-  recibidoPorCC: string;
   entregadoPorNombre?: string;
   entregadoPorCC?: string;
   vistoBueno: string;
@@ -35,4 +34,4 @@ export interface HeaderConfig {
   fechaFormato: string;
 }
 
-export type View = 'dashboard' | 'create' | 'preview';
+export type View = "dashboard" | "create" | "preview" | "other";

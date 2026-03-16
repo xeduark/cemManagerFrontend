@@ -1,16 +1,13 @@
-export async function generarActa(prompt: string) {
-  const res = await fetch("http://localhost:3001/api/generar-acta", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
-  })
+const API_DB = "http://localhost:4000/api";
+const API_AI = "http://localhost:3001/api";
 
-  if (!res.ok) throw new Error("Error generando acta")
-  return res.json()
-}
+
 
 // src/services/api.ts
 export const createActa = async (acta: any) => {
+
+  console.log("ACTA ENVIADA:", acta);
+
   const res = await fetch("http://localhost:4000/api/actas", {
     method: "POST",
     headers: {
@@ -20,27 +17,26 @@ export const createActa = async (acta: any) => {
   });
 
   if (!res.ok) {
-    throw new Error("Error creando el acta");
+    const error = await res.text();
+    console.error("ERROR BACKEND:", error);
+    throw new Error(error);
   }
 
   return res.json();
 };
 
-// src/services/api.ts
+// fetch para obtener obtener todo respecto a las actas
 export const backendService = {
-  // crear nueva acta
-  getNextActaNumber: async (): Promise<number> => {
-    const res = await fetch("http://localhost:4000/api/actas");
-    if (!res.ok) throw new Error("Error obteniendo número de acta");
-    const data = await res.json();
-    return data.nextNumber;
-  },
 
-  // Guarda el acta con el archivo escaneado
-  saveActa: async (acta: any, file: File): Promise<{ success: boolean; driveId?: string }> => {
-    const formData = new FormData();
+  // Guardar acta con archivo
+  saveActa: async (acta: any, file?: File) => {
+  const formData = new FormData();
+
+  if (file) {
     formData.append("file", file);
-    formData.append("acta", JSON.stringify(acta));
+  }
+
+  formData.append("acta", JSON.stringify(acta));
 
     const res = await fetch("http://localhost:3001/api/save-acta", {
       method: "POST",
@@ -48,34 +44,34 @@ export const backendService = {
     });
 
     if (!res.ok) throw new Error("Error subiendo acta");
+
     return res.json();
   },
 
-  // Genera texto de acta usando IA
-  generarActa: async (prompt: string): Promise<{ textoGenerado: string }> => {
-    const res = await fetch("http://localhost:4000/api/actas", {
+  // IA para redactar acta
+  generarActa: async (prompt: string) => {
+    const res = await fetch("http://localhost:3001/api/generar-acta", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     });
 
-    if (!res.ok) throw new Error("Error generando acta con IA");
+    if (!res.ok) throw new Error("Error generando acta");
+
     return res.json();
   },
 };
 
-// api para traer usuarios del sistema
-const API_BASE = "http://localhost:4000/api";
 
 export const api = {
   get: async (endpoint: string) => {
-    const res = await fetch(`${API_BASE}${endpoint}`);
+    const res = await fetch(`${API_DB}${endpoint}`);
     if (!res.ok) throw new Error("Error en la API");
     return res.json();
   },
 
   post: async (endpoint: string, data: any) => {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const res = await fetch(`${API_DB}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -86,12 +82,7 @@ export const api = {
   },
 };
 
-// Ejemplo de uso para obtener sedes
-export interface Sede {
-  id: number;
-  nombre: string;
-}
 
-export const getSedes = async (): Promise<Sede[]> => {
-  return api.get("/sedes");
-};
+
+
+

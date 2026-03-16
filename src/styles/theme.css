@@ -1,0 +1,136 @@
+/* theme.css */
+
+/* modo claro */
+:root {
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f9fafb;
+  --bg-logo: #003876;
+  --bg-input: #f9fafb;
+  --bg-soft: #f8fafc;
+
+  --text-main: #0f172a;
+  --text-logo:#ffffff;
+  --text-logo-title: #003876;
+  --text-muted: #9ca3af;
+
+  --border-color: #003876;
+  --border-hover: #e5e7eb;
+   --primary: #2563eb;
+   --primary-hover: #1d4ed8;
+     --success: #16a34a;
+  --success-hover: #15803d;
+   --btn-secondary-bg: #eff6ff;
+   --btn-secondary-text: #2563eb;
+   --btn-theme-bg: #f1f5f9;
+  --btn-theme-text: #475569;
+  --btn-theme-border: #e5e7eb;
+  --btn-new-acta: #1D4ED8;
+  --btn-new-acta-hover: #002a5a;
+
+}
+
+.dark {
+  --bg-page: #020617;
+  --bg-card: #0f172a;
+  --bg-input: #1e293b;
+  --bg-soft: #1e293b;
+  --bg-logo: #003876;
+
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+
+  --btn-secondary-bg: rgba(37,99,235,0.2);
+  --btn-secondary-text: #93c5fd;
+  --text-main: #f1f5f9;
+  --text-logo:#ffffff;
+  --text-logo-title: #60A5FA;
+  --border-color: #1e293b;
+  --bg-input: #1e293b;
+  --border-hover: #334155;
+  --btn-theme-bg: #0f172a;
+  --btn-theme-text: #facc15;
+  --btn-theme-border: #1e293b;
+  --btn-new-acta: #1D4ED8;
+  --btn-new-acta-hover: #002a5a;
+
+}
+
+/* estilos para componentes */
+.card {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-main);
+}
+
+.navbar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.input-field {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border: 2px solid transparent;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-field:hover {
+  border-color: var(--border-hover);
+}
+
+.dark .input-field {
+  background: var(--bg-input);
+  color: white;
+}
+
+.dark .input-field:hover {
+  border-color: var(--border-hover);
+}
+
+/* botones */
+.accessory-btn {
+  transition: all 0.2s ease;
+}
+
+.accessory-btn:hover {
+  border-color: var(--border-hover);
+}
+
+.dark .accessory-btn:hover {
+  border-color: var(--border-hover);
+}
+
+.theme-btn {
+  background: var(--btn-theme-bg);
+  color: var(--btn-theme-text);
+  border-color: var(--btn-theme-border);
+}
+
+.theme-btn:hover {
+  transform: scale(1.05);
+}
+
+.btn-save {
+  background-color: var(--success);
+  transition: background-color 0.3s ease;
+}
+
+.btn-save:hover {
+  background-color: var(--success-hover);
+}
+
+.btn-preview {
+  background-color: var(--primary);
+  transition: background-color 0.3s ease;
+}
+
+.btn-preview:hover {
+  background-color: var(--primary-hover);
+}

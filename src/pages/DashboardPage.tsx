@@ -1,7 +1,9 @@
 import React from 'react';
 import { Search, FileText, CheckCircle2, Clock, FileUp, Loader2 } from 'lucide-react';
 import { ActaData } from '../../types';
-
+import { actaService } from '../services/acta.service';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 interface DashboardPageProps {
   history: ActaData[];
   searchTerm: string;
@@ -23,13 +25,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   onTriggerUpload,
   onViewActa
 }) => {
-  const filteredHistory = history.filter(h => 
-    h.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  //estados locales para manejo de actas, aunque se reciben por props, esto es para manejar estados de carga o actualizaciones locales si es necesario
+const [actas, setActas] = useState<ActaData[]>([]);
+const [loading, setLoading] = useState(true);
+const [currentActa, setCurrentActa] = useState<ActaData | null>(null);
+const navigate = useNavigate();
+
+
+  const filteredHistory = actas.filter(h => 
+    h.recibidoPorNombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
     h.actaNumber.includes(searchTerm)
   );
 
+
+useEffect(() => {
+  const fetchLatest = async () => {
+    try {
+      const data = await actaService.getLatestActas(10);
+      setActas(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchLatest();
+}, []);
+
+const onEditActa = (acta: ActaData) => {
+  setCurrentActa(acta);
+  navigate(`/edit/${acta.id}`);
+};
+
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 no-print">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 no-print mt-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Archivo de Actas</h2>
@@ -82,7 +112,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                   #{acta.actaNumber}
                 </div>
                 <div className="flex-1 min-w-0 pr-8">
-                  <h4 className="font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">{acta.nombre || 'Personal'}</h4>
+                  <h4 className="font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">{acta.recibidoPorNombre || 'Personal'}</h4>
                   <p className="text-xs text-gray-400 dark:text-slate-500 font-bold">{acta.fecha}</p>
                 </div>
               </div>
