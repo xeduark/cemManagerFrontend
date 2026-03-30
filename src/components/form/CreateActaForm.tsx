@@ -4,6 +4,7 @@ import { ActaData } from "../../../types";
 import { ACCESORIOS_DISPONIBLES } from "../../../constants";
 import { getSedes } from "../../services/sede.service";
 import { getCargos } from "../../services/cargo.service";
+import { getDiademaMarcas } from "../../services/marcaDiadema.service";
 import Select from "react-select";
 
 //props que recibe el formulario para crear acta, se pasan desde CreateActaPage
@@ -69,15 +70,57 @@ const ActaForm: React.FC<ActaFormProps> = ({
     fetchSedes();
   }, []);
 
+  const [diademaMarcas, setDiademaMarcas] = React.useState<any[]>([]);
+  const [loadingMarcas, setLoadingMarcas] = React.useState(true);
+  const hasDiademas = acta.accesorios?.includes("DIADEMAS");
+
+
+  React.useEffect(() => {
+    if (!hasDiademas || diademaMarcas.length > 0) return;
+
+    const fetchMarcas = async () => {
+      try {
+        setLoadingMarcas(true);
+        const data = await getDiademaMarcas();
+        setDiademaMarcas(data);
+      } catch (err) {
+        console.error("Error cargando marcas", err);
+      } finally {
+        setLoadingMarcas(false);
+      }
+    };
+
+    fetchMarcas();
+  }, [hasDiademas]);
+
   const toggleAccessory = (acc: string) => {
     const currentList = acta.accesorios ? acta.accesorios.split(", ") : [];
-    let newList;
+
+    let newList: string[];
+
     if (currentList.includes(acc)) {
+      //  QUITAR accesorio
       newList = currentList.filter((item) => item !== acc);
+
+      //  CASO ESPECIAL: DIADEMAS
+      if (acc === "DIADEMAS") {
+        setActa({
+          ...acta,
+          accesorios: newList.join(", "),
+          diademaMarcaId: undefined,
+          diademaSerial: "",
+        });
+        return;
+      }
     } else {
+      // ✅ AGREGAR accesorio
       newList = [...currentList, acc];
     }
-    setActa({ ...acta, accesorios: newList.join(", ") });
+
+    setActa({
+      ...acta,
+      accesorios: newList.join(", "),
+    });
   };
 
   // Styles personalizados para react-select
@@ -334,6 +377,65 @@ const ActaForm: React.FC<ActaFormProps> = ({
             </div>
           </div>
         </div>
+
+        {hasDiademas && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+            {/* MARCA */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
+                Marca Diadema
+              </label>
+
+              <Select
+                placeholder={
+                  loadingMarcas ? "Cargando marcas..." : "Seleccionar marca..."
+                }
+                options={diademaMarcas.map((m) => ({
+                  value: m.id,
+                  label: m.nombre,
+                }))}
+                value={
+                  acta.diademaMarcaId
+                    ? {
+                        value: acta.diademaMarcaId,
+                        label: diademaMarcas.find(
+                          (m) => m.id === acta.diademaMarcaId,
+                        )?.nombre,
+                      }
+                    : null
+                }
+                onChange={(option) =>
+                  setActa({
+                    ...acta,
+                    diademaMarcaId: option?.value,
+                  })
+                }
+                isSearchable
+                styles={selectStyles}
+              />
+            </div>
+
+            {/* SERIAL */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
+                Serial Diadema
+              </label>
+
+              <input
+                type="text"
+                className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
+                value={acta.diademaSerial || ""}
+                onChange={(e) =>
+                  setActa({
+                    ...acta,
+                    diademaSerial: e.target.value,
+                  })
+                }
+                placeholder="Ej: 2536AY13B3"
+              />
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 space-y-2">
           <label

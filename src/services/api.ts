@@ -1,4 +1,4 @@
-const API_DB = "http://localhost:4000/api";
+export const API_DB = "http://localhost:4000/api";
 const API_AI = "http://localhost:3001/api";
 
 

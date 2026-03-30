@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter } from "react-router-dom";
-import NavbarWrapper from "./src/components/wrappers/NavbarWrapper";
-import AppRoutes from "./src/routes/AppRoutes";
-import { ActaData } from "./types";
-import { INITIAL_ACTA_DATA } from "./constants";
-import { backendService } from "./src/services/api";
+import NavbarWrapper from "./components/wrappers/NavbarWrapper";
+import AppRoutes from "./routes/AppRoutes";
+import { ActaData } from "../types";
+import { INITIAL_ACTA_DATA } from "../constants";
+import { backendService } from "./services/api";
 
 const App: React.FC = () => {
   const [history, setHistory] = useState<ActaData[]>([]);

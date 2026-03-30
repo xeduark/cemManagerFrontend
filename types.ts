@@ -20,6 +20,10 @@ export interface ActaData {
   status: 'draft' | 'pending_scan' | 'uploaded';
   driveFileId?: string;
   scannedFileName?: string;
+  recibidoPorFirma?: string; // base64 de la firma
+  entregadoPorFirma?: string; // base64 de la firma
+  diademaSerial?: string;
+  diademaMarcaId?: number;
 }
 
 type User = {

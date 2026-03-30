@@ -83,6 +83,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
             saveToHistory={saveToHistory}
             triggerUpload={triggerUpload}
             handlePrint={handlePrint}
+            setCurrentActa={setCurrentActa}
           />
         }
       />

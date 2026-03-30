@@ -134,3 +134,11 @@ body {
 .btn-preview:hover {
   background-color: var(--primary-hover);
 }
+
+.content-title {
+ margin-left: 10px;
+}
+
+.content-search-limit{
+  margin-right: 10px;
+}

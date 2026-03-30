@@ -37,11 +37,11 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
       setIsAIThinking(false);
     }
   };
-const mode = id ? "edit" : "create";
+  const mode = id ? "edit" : "create";
   // Validación básica de campos obligatorios antes de mostrar la vista previa
 
-const [isLoadingActa, setIsLoadingActa] = useState(false);// Estado para controlar la carga del acta al editar
-// Función para validar los campos obligatorios del formulario
+  const [isLoadingActa, setIsLoadingActa] = useState(false); // Estado para controlar la carga del acta al editar
+  // Función para validar los campos obligatorios del formulario
 
   const validateForm = () => {
     const missingFields: string[] = [];
@@ -53,6 +53,17 @@ const [isLoadingActa, setIsLoadingActa] = useState(false);// Estado para control
     if (!acta.marca) missingFields.push("Marca / No. Serial");
     if (!acta.entregadoPorNombre) missingFields.push("Entregado por (Usuario)");
 
+    const hasDiademas = acta.accesorios?.includes("DIADEMAS");
+
+    if (hasDiademas) {
+      if (!acta.diademaMarcaId) {
+        missingFields.push("Marca de la Diadema");
+      }
+
+      if (!acta.diademaSerial?.trim()) {
+        missingFields.push("Serial de la Diadema");
+      }
+    }
     if (missingFields.length > 0) {
       alert(
         `Por favor complete los siguientes campos obligatorios:\n\n- ${missingFields.join("\n- ")}`,
@@ -76,7 +87,6 @@ const [isLoadingActa, setIsLoadingActa] = useState(false);// Estado para control
       let savedActa;
 
       if (acta.id) {
-
         savedActa = await actaService.updateActa(acta.id, {
           fecha: acta.fecha,
           cargo: acta.cargo,
@@ -93,7 +103,7 @@ const [isLoadingActa, setIsLoadingActa] = useState(false);// Estado para control
           status: "draft",
         });
       } else {
-        // ⭐ Si no existe → crear
+        //  Si no existe → crear
         savedActa = await actaService.createActa({
           fecha: acta.fecha,
           cargo: acta.cargo,
@@ -143,31 +153,29 @@ const [isLoadingActa, setIsLoadingActa] = useState(false);// Estado para control
     loadUsers();
   }, []);
 
- useEffect(() => {
-  const loadActa = async () => {
-    if (!id || id === "draft") return;
+  useEffect(() => {
+    const loadActa = async () => {
+      if (!id || id === "draft") return;
 
-    try {
-      setIsLoadingActa(true);
-      const data = await actaService.getActaById(id);
-      setActa(data);
-    } catch (error) {
-      console.error("Error cargando acta", error);
-    } finally {
-      setIsLoadingActa(false);
-    }
-  };
+      try {
+        setIsLoadingActa(true);
+        const data = await actaService.getActaById(id);
+        setActa(data);
+      } catch (error) {
+        console.error("Error cargando acta", error);
+      } finally {
+        setIsLoadingActa(false);
+      }
+    };
 
-  loadActa();
-}, [id, setActa]);
+    loadActa();
+  }, [id, setActa]);
 
-if (isLoadingActa) {
-  return (
-    <div className="p-20 text-center text-gray-500">
-      Cargando acta...
-    </div>
-  );
-}
+  if (isLoadingActa) {
+    return (
+      <div className="p-20 text-center text-gray-500">Cargando acta...</div>
+    );
+  }
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500 no-print max-w-4xl mx-auto p-4">

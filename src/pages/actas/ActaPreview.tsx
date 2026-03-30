@@ -1,18 +1,23 @@
 import React from "react";
 import { ActaData } from "../../../types";
 import { CEM_HEADER_CONFIG } from "../../../constants";
+import SignaturePad from "./SignaturePad";
 
 export interface ActaPreviewProps {
   data: ActaData;
   handlePrint?: () => void;
   triggerUpload?: (actaId: string) => void;
 
+  onSaveFirmaRecibido?: (firma: string) => void;
+  onSaveFirmaEntregado?: (firma: string) => void;
 }
 
 const ActaPreview: React.FC<ActaPreviewProps> = ({
   data,
   handlePrint,
-  triggerUpload
+  triggerUpload,
+  onSaveFirmaRecibido,
+  onSaveFirmaEntregado,
 }) => {
   console.log("Número de acta:", data.actaNumber);
   return (
@@ -40,16 +45,12 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
         <tbody>
           <tr>
             <td className="border border-black p-4 w-1/3 text-center align-middle">
-              <div className="flex flex-col items-center">
-                <div className="text-[18px] font-bold leading-tight uppercase">
-                  Comité de
-                </div>
-                <div className="text-[18px] font-bold leading-tight uppercase">
-                  Estudios
-                </div>
-                <div className="text-[18px] font-bold leading-tight uppercase">
-                  Médicos
-                </div>
+              <div className="flex items-center justify-center">
+                <img
+                  src="https://jzugvjafqvehhsilpquh.supabase.co/storage/v1/object/public/galeria-app/Comite-Logo_Comite-1.png"
+                  alt="Logo Comité"
+                  className="max-h-[80px] object-contain"
+                />
               </div>
             </td>
             <td className="border border-black p-4 w-1/3 text-center font-bold text-[14px] align-middle uppercase">
@@ -133,20 +134,33 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
           <div className="p-2 border-b border-black font-bold text-center bg-gray-50">
             Recibido por:
           </div>
-          <div className="flex-1 flex flex-col items-center justify-end p-6 pb-2">
-            {/* Aquí se podría renderizar la firma capturada: */}
-            {/* {data.recibidoPorFirma && <img src={data.recibidoPorFirma} alt="Firma Recibido" className="max-h-16 mt-2"/>} */}
-            <div className="w-full border-t border-black mb-2"></div>
-            <div className="text-[10px] font-bold uppercase">
-              Firma de Recibido
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center p-2">
+            {data.recibidoPorFirma ? (
+              <div className="flex flex-col items-center">
+                <img
+                  src={data.recibidoPorFirma}
+                  className="max-h-24 object-contain"
+                />
+
+                <button
+                  onClick={() => onSaveFirmaRecibido?.("")}
+                  className="text-[10px] text-red-500 mt-2"
+                >
+                  Rehacer firma
+                </button>
+              </div>
+            ) : (
+              <SignaturePad
+                label="Firma quien recibe"
+                onSave={(firma) => onSaveFirmaRecibido?.(firma)}
+                onClear={() => {}}
+              />
+            )}
           </div>
           <div className="p-3 border-t border-black text-[10px] space-y-1">
             <div className="flex gap-1">
               <span className="font-bold">Nombre:</span>{" "}
-              <span className="uppercase">
-                {data.recibidoPorNombre}
-              </span>
+              <span className="uppercase">{data.recibidoPorNombre}</span>
             </div>
             <div className="flex gap-1">
               <span className="font-bold">CC:</span> {data.recibidoPorCC}
@@ -159,12 +173,28 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
           <div className="p-2 border-b border-black font-bold text-center bg-gray-50">
             Entregado por:
           </div>
-          <div className="flex-1 flex flex-col items-center justify-end p-6 pb-2">
-            {/* {data.entregadoPorFirma && <img src={data.entregadoPorFirma} alt="Firma Entregado" className="max-h-16 mt-2"/>} */}
-            <div className="w-full border-t border-black mb-2"></div>
-            <div className="text-[10px] font-bold uppercase">
-              Firma de Entrega
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center p-2">
+            {data.entregadoPorFirma ? (
+              <div className="flex flex-col items-center">
+                <img
+                  src={data.entregadoPorFirma}
+                  className="max-h-24 object-contain"
+                />
+
+                <button
+                  onClick={() => onSaveFirmaEntregado?.("")}
+                  className="text-[10px] text-red-500 mt-2"
+                >
+                  Rehacer firma
+                </button>
+              </div>
+            ) : (
+              <SignaturePad
+                label="Firma quien entrega"
+                onSave={(firma) => onSaveFirmaEntregado?.(firma)}
+                onClear={() => {}}
+              />
+            )}
           </div>
           <div className="p-3 border-t border-black text-[10px] space-y-1">
             <div className="flex gap-1">

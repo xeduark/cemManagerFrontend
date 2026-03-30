@@ -18,7 +18,6 @@ export const INITIAL_ACTA_DATA = {
   id: '',
   actaNumber: '',
   fecha: new Date().toLocaleDateString('es-CO'),
-  nombre: '',
   cargo: '',
   sede: '',
   equipo: '',
@@ -32,4 +31,9 @@ export const INITIAL_ACTA_DATA = {
   entregadoPorCC: '',
   vistoBueno: 'Isaías Quintero',
   status: 'draft' as const,
+  diadema_marca: '',
+  diadema_serial: '',
+
+  recibidoPorFirma: '',
+  entregadoPorFirma: ''
 };

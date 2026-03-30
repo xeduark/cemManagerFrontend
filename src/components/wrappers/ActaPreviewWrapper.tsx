@@ -7,13 +7,17 @@ import { Printer, FileUp } from "lucide-react";
 
 interface PreviewWrapperProps {
   currentActa: ActaData;
+  setCurrentActa: (acta: ActaData) => void;
   saveToHistory: (acta: ActaData) => void;
   triggerUpload: (id: string) => void;
   handlePrint: () => void;
 }
 
+
+//recibe las propiedades necesarias para mostrar la vista previa del acta, manejar la impresión y la carga del escaneo. Es el componente que se muestra después de generar el PDF y antes de imprimir o subir el documento firmado.
 const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
   currentActa,
+  setCurrentActa,
   saveToHistory,
   triggerUpload,
   handlePrint,
@@ -23,6 +27,22 @@ const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
   const navigate = useNavigate();
   const { id } = useParams();
   const actaId = id === "draft" ? currentActa.id : id;
+
+  // Funciones para manejar la captura de firmas desde el componente SignaturePad dentro de ActaPreview
+const handleFirmaRecibido = (firma: string) => {
+  setCurrentActa({
+    ...currentActa,
+    recibidoPorFirma: firma,
+  });
+}
+
+const handleFirmaEntregado = (firma: string) => {
+  setCurrentActa({
+    ...currentActa,
+    entregadoPorFirma: firma,
+  });
+}
+
   return (
     <div className="animate-in zoom-in-95 duration-300 max-w-5xl mx-auto">
       <ActaSubNavbar
@@ -49,7 +69,10 @@ const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
       />
 
       <div className="print-area bg-white shadow-2xl dark:shadow-blue-500/5 rounded-sm p-4 ring-1 ring-gray-200 dark:ring-slate-800 mb-20 overflow-auto">
-        <ActaPreview data={currentActa} />
+        <ActaPreview data={currentActa}
+         onSaveFirmaRecibido={handleFirmaRecibido}
+         onSaveFirmaEntregado={handleFirmaEntregado}
+         />
       </div>
     </div>
   );
