@@ -47,7 +47,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
             <td className="border border-black p-4 w-1/3 text-center align-middle">
               <div className="flex items-center justify-center">
                 <img
-                  src="https://jzugvjafqvehhsilpquh.supabase.co/storage/v1/object/public/galeria-app/Comite-Logo_Comite-1.png"
+                  src="https://res.cloudinary.com/dbhbuhjum/image/upload/f_auto,q_auto/descarga_moi2yv"
                   alt="Logo Comité"
                   className="max-h-[80px] object-contain"
                 />

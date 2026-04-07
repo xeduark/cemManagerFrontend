@@ -101,6 +101,8 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
           entregadoPorCC: acta.entregadoPorCC,
           vistoBueno: acta.vistoBueno,
           status: "draft",
+          diademaMarcaId: acta.diademaMarcaId,
+          diademaSerial: acta.diademaSerial,
         });
       } else {
         //  Si no existe → crear
@@ -118,6 +120,8 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
           entregadoPorCC: acta.entregadoPorCC,
           vistoBueno: acta.vistoBueno,
           status: "draft",
+          diademaMarcaId: acta.diademaMarcaId,
+          diademaSerial: acta.diademaSerial,
         });
       }
 
@@ -153,6 +157,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
     loadUsers();
   }, []);
 
+  // Cargar acta existente si se proporciona un ID en la URL (modo edición)
   useEffect(() => {
     const loadActa = async () => {
       if (!id || id === "draft") return;
@@ -160,6 +165,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
       try {
         setIsLoadingActa(true);
         const data = await actaService.getActaById(id);
+        console.log("ACTA EN COMPONENTE:", data);
         setActa(data);
       } catch (error) {
         console.error("Error cargando acta", error);
@@ -170,6 +176,16 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
 
     loadActa();
   }, [id, setActa]);
+
+  useEffect(() => {
+    if (!acta.entregadoPorNombre || users.length === 0) return;
+
+    const user = users.find((u) => u.nombre === acta.entregadoPorNombre);
+
+    if (user) {
+      setSelectedUserId(user.id.toString());
+    }
+  }, [acta.entregadoPorNombre, users]);
 
   if (isLoadingActa) {
     return (

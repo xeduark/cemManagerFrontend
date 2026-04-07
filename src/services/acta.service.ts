@@ -18,6 +18,8 @@ export interface ActaPayload {
   status: "draft" | "pending_scan" | "uploaded";
   driveFileId?: string;
   scannedFileName?: string;
+  diademaMarcaId?: number;
+  diademaSerial?: string;
 }
 
 // Función para mapear backend → frontend
@@ -45,6 +47,8 @@ const mapBackendToActaData = (actaFromBackend: any): ActaData => {
     status: payload.status ?? "draft",
     driveFileId: payload.driveFileId,
     scannedFileName: payload.scannedFileName,
+    diademaMarcaId: actaFromBackend.diadema_marca_id ?? undefined,
+    diademaSerial: actaFromBackend.diadema_serial ?? "",
   };
 };
 
@@ -81,13 +85,22 @@ export const actaService = {
   // Función para obtener una acta por ID
   getActaById: async (id: string): Promise<ActaData> => {
     const rawActa = await api.get(`/actas/${id}`);
-    return mapBackendToActaData(rawActa);
+    console.log("RAW BACKEND:", rawActa);
+
+    const mapped = mapBackendToActaData(rawActa);
+    console.log("MAPPED ACTA:", mapped);
+
+    return mapped;
   },
 
   // Función para actualizar una acta existente
-  updateActa: async (id: string, payload: ActaPayload) => {
-    const rawActa = await api.post(`/actas/${id}`, {
-      payload,
+  updateActa: async (id: string, payload: any) => {
+    const { diademaMarcaId, diademaSerial, ...cleanPayload } = payload;
+
+    const rawActa = await api.put(`/actas/${id}`, {
+      ...cleanPayload,
+      diadema_marca_id: diademaMarcaId ?? null,
+      diadema_serial: diademaSerial ?? null,
     });
 
     return mapBackendToActaData(rawActa);

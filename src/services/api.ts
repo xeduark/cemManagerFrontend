@@ -80,6 +80,17 @@ export const api = {
     if (!res.ok) throw new Error("Error en la API");
     return res.json();
   },
+  
+  put: async (endpoint: string, data: any) => {
+    const res = await fetch(`${API_DB}${endpoint}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  
+    if (!res.ok) throw new Error("Error en la API");
+    return res.json();
+  },
 };
 
 
