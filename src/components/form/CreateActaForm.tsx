@@ -5,6 +5,7 @@ import { ACCESORIOS_DISPONIBLES } from "../../../constants";
 import { getSedes } from "../../services/sede.service";
 import { getCargos } from "../../services/cargo.service";
 import { getDiademaMarcas } from "../../services/marcaDiadema.service";
+import { getLaptopMarcas } from "../../services/laptopMarca.service";
 import Select from "react-select";
 
 //props que recibe el formulario para crear acta, se pasan desde CreateActaPage
@@ -38,6 +39,13 @@ const ActaForm: React.FC<ActaFormProps> = ({
 }) => {
   const [cargos, setCargos] = React.useState<any[]>([]);
   const [loadingCargos, setLoadingCargos] = React.useState(true);
+  const [sedes, setSedes] = React.useState<any[]>([]);
+  const [loadingSedes, setLoadingSedes] = React.useState(true);
+  const [diademaMarcas, setDiademaMarcas] = React.useState<any[]>([]);
+  const [loadingMarcas, setLoadingMarcas] = React.useState(true);
+  const hasDiademas = acta.accesorios?.includes("DIADEMAS");
+  const [laptopMarcas, setLaptopMarcas] = React.useState<any[]>([]);
+  const [loadingLaptopMarcas, setLoadingLaptopMarcas] = React.useState(true);
 
   React.useEffect(() => {
     const fetchCargos = async () => {
@@ -53,9 +61,6 @@ const ActaForm: React.FC<ActaFormProps> = ({
     fetchCargos();
   }, []);
 
-  const [sedes, setSedes] = React.useState<any[]>([]);
-  const [loadingSedes, setLoadingSedes] = React.useState(true);
-
   React.useEffect(() => {
     const fetchSedes = async () => {
       try {
@@ -69,11 +74,6 @@ const ActaForm: React.FC<ActaFormProps> = ({
     };
     fetchSedes();
   }, []);
-
-  const [diademaMarcas, setDiademaMarcas] = React.useState<any[]>([]);
-  const [loadingMarcas, setLoadingMarcas] = React.useState(true);
-  const hasDiademas = acta.accesorios?.includes("DIADEMAS");
-
 
   React.useEffect(() => {
     if (!hasDiademas || diademaMarcas.length > 0) return;
@@ -92,6 +92,21 @@ const ActaForm: React.FC<ActaFormProps> = ({
 
     fetchMarcas();
   }, [hasDiademas]);
+
+  React.useEffect(() => {
+    const fetchLaptopMarcas = async () => {
+      try {
+        const data = await getLaptopMarcas();
+        setLaptopMarcas(data);
+      } catch (error) {
+        console.error("Error cargando marcas de laptop", error);
+      } finally {
+        setLoadingLaptopMarcas(false);
+      }
+    };
+
+    fetchLaptopMarcas();
+  }, []);
 
   const toggleAccessory = (acc: string) => {
     const currentList = acta.accesorios ? acta.accesorios.split(", ") : [];
@@ -326,11 +341,47 @@ const ActaForm: React.FC<ActaFormProps> = ({
             </div>
 
             <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
+                Marca Laptop
+              </label>
+
+              <Select
+                placeholder={
+                  loadingLaptopMarcas
+                    ? "Cargando marcas..."
+                    : "Seleccionar marca..."
+                }
+                options={laptopMarcas.map((m) => ({
+                  value: m.id,
+                  label: m.nombre,
+                }))}
+                value={
+                  acta.laptopMarcaId
+                    ? {
+                        value: acta.laptopMarcaId,
+                        label: laptopMarcas.find(
+                          (m) => m.id === acta.laptopMarcaId,
+                        )?.nombre,
+                      }
+                    : null
+                }
+                onChange={(option) =>
+                  setActa({
+                    ...acta,
+                    laptopMarcaId: option?.value,
+                  })
+                }
+                isSearchable
+                styles={selectStyles}
+              />
+            </div>
+            
+            <div className="space-y-2">
               <label
                 className="text-[11px] font-black uppercase tracking-widest ml-1"
                 style={{ color: "var(--text-muted)" }}
               >
-                Marca / No. Serial
+                No. Serial
               </label>
 
               <input

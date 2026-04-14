@@ -1,4 +1,5 @@
 
+import { Laptop } from 'lucide-react';
 import { HeaderConfig } from './types';
 
 export const CEM_HEADER_CONFIG: HeaderConfig = {
@@ -33,6 +34,7 @@ export const INITIAL_ACTA_DATA = {
   status: 'draft' as const,
   diadema_marca: '',
   diadema_serial: '',
+  Laptop_marca: '',
 
   recibidoPorFirma: '',
   entregadoPorFirma: ''

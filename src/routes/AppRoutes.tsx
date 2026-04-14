@@ -20,7 +20,6 @@ interface AppRoutesProps {
 }
 
 const AppRoutes: React.FC<AppRoutesProps> = ({
-  history,
   currentActa,
   setCurrentActa,
   saveToHistory,
@@ -39,7 +38,6 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
         path="/actas"
         element={
           <DashboardPage
-            history={history}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             isUploading={isUploading}

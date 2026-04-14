@@ -24,6 +24,7 @@ export interface ActaData {
   entregadoPorFirma?: string; // base64 de la firma
   diademaSerial?: string;
   diademaMarcaId?: number;
+  laptopMarcaId?: number;
 }
 
 type User = {
