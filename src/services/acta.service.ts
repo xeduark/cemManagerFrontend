@@ -1,79 +1,160 @@
-// src/services/acta.service.ts
-import { ActaData } from "../../types";
+import { ActaData } from "../types/types";
 import { api } from "./api";
 
+// =============================
+// DTO FRONT → BACK (LIMPIO)
+// =============================
 export interface ActaPayload {
   fecha: string;
-  cargo: string;
-  sede: string;
+
+  cargoId: number;
+  sedeId: number;
+
   equipo: string;
-  marca: string;
+
+  laptopSerial: string;
+  laptopMarcaId?: number;
+
   accesorios: string;
   observaciones: string;
+
   recibidoPorNombre: string;
   recibidoPorCC: string;
+
   entregadoPorNombre?: string;
   entregadoPorCC?: string;
+
   vistoBueno: string;
-  status: "draft" | "pending_scan" | "uploaded";
-  driveFileId?: string;
-  scannedFileName?: string;
+
   diademaMarcaId?: number;
   diademaSerial?: string;
 }
 
-// Función para mapear backend → frontend
-const mapBackendToActaData = (actaFromBackend: any): ActaData => {
-  const payload = actaFromBackend.payload || {};
+// =============================
+// DTO BACK (TIPADO OPCIONAL)
+// =============================
+interface BackendActa {
+  id: number;
+  acta_number: string;
+  fecha: string;
 
-  return {
-    id: actaFromBackend.id.toString(),
-    actaNumber: actaFromBackend.acta_number,
-    fecha: payload.fecha ?? "",
-    cargo: payload.cargo ?? "",
-    sede: payload.sede ?? "",
-    equipo: payload.equipo ?? "",
-    marca: payload.marca ?? "",
-    accesorios: payload.accesorios ?? "",
-    estado: actaFromBackend.estado,
-    observaciones: payload.observaciones ?? "",
-    recibidoPorNombre: payload.recibidoPorNombre ?? "",
-    recibidoPorCC: payload.recibidoPorCC ?? "",
-    entregadoPorNombre: payload.entregadoPorNombre ?? "",
-    entregadoPorCC: payload.entregadoPorCC ?? "",
-    vistoBueno: payload.vistoBueno ?? "",
-    fechaDevolucion: payload.fechaDevolucion ?? "",
-    recibidoPorDevolucion: payload.recibidoPorDevolucion ?? "",
-    status: payload.status ?? "draft",
-    driveFileId: payload.driveFileId,
-    scannedFileName: payload.scannedFileName,
-    diademaMarcaId: actaFromBackend.diadema_marca_id ?? undefined,
-    diademaSerial: actaFromBackend.diadema_serial ?? "",
+  cargo_id: number;
+  cargo: string;
+
+  sede_id: number;
+  sede: string;
+
+  equipo: string;
+
+  laptop_serial: string;
+  laptop_marca_id?: number;
+
+  accesorios: string;
+  estado: string;
+  observaciones: string;
+
+  recibido_por_nombre: string;
+  recibido_por_cc: string;
+
+  entregado_por_nombre?: string;
+  entregado_por_cc?: string;
+
+  visto_bueno: string;
+
+  diadema_serial?: string;
+  diadema_marca_id?: number;
+}
+
+// =============================
+// MAPPER BACK → FRONT
+// =============================
+const mapBackendToActaData = (data: BackendActa): ActaData => ({
+  id: data.id,
+
+  actaNumber: data.acta_number,
+  fecha: data.fecha,
+
+  cargoId: data.cargo_id,
+  cargo: data.cargo,
+
+  sedeId: data.sede_id,
+  sede: data.sede,
+
+  equipo: data.equipo,
+
+  laptopSerial: data.laptop_serial,
+  laptopMarcaId: data.laptop_marca_id ?? undefined,
+
+  accesorios: data.accesorios,
+  estado: data.estado,
+  observaciones: data.observaciones,
+
+  recibidoPorNombre: data.recibido_por_nombre,
+  recibidoPorCC: data.recibido_por_cc,
+
+  entregadoPorNombre: data.entregado_por_nombre,
+  entregadoPorCC: data.entregado_por_cc,
+
+  vistoBueno: data.visto_bueno,
+
+  diademaSerial: data.diadema_serial ?? undefined,
+  diademaMarcaId: data.diadema_marca_id ?? undefined,
+});
+
+// =============================
+// MAPPER FRONT → BACK
+// ✅ AHORA ENVIAMOS camelCase
+// =============================
+const mapPayloadToBackend = (payload: ActaPayload) => {
+  const mapped = {
+    fecha: payload.fecha,
+
+    cargoId: payload.cargoId,
+    sedeId: payload.sedeId,
+
+    equipo: payload.equipo,
+
+    laptopSerial: payload.laptopSerial,
+    laptopMarcaId: payload.laptopMarcaId ?? null,
+
+    accesorios: payload.accesorios,
+    observaciones: payload.observaciones,
+
+    recibidoPorNombre: payload.recibidoPorNombre,
+    recibidoPorCC: payload.recibidoPorCC,
+
+    entregadoPorNombre: payload.entregadoPorNombre ?? null,
+    entregadoPorCC: payload.entregadoPorCC ?? null,
+
+    vistoBueno: payload.vistoBueno,
+
+    diademaMarcaId: payload.diademaMarcaId ?? null,
+    diademaSerial: payload.diademaSerial ?? null,
   };
+
+  // 🔍 DEBUG CLAVE
+  console.log("🚀 PAYLOAD FRONT → BACK:", mapped);
+
+  return mapped;
 };
 
-// Servicio para manejar todas las operaciones relacionadas con actas
-
+// =============================
+// SERVICE
+// =============================
 export const actaService = {
+  // CREAR
   createActa: async (payload: ActaPayload): Promise<ActaData> => {
-    const rawActa = await api.post("/actas", payload);
-    return mapBackendToActaData(rawActa);
+    const mapped = mapPayloadToBackend(payload);
+
+    const raw = await api.post("/actas", mapped);
+
+    return mapBackendToActaData(raw);
   },
 
-  // Función para obtener actas con paginación y búsqueda
-  getActas: async (
-    page: number = 1,
-    limit: number = 10,
-    search: string = "",
-  ): Promise<{
-    data: ActaData[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> => {
+  // LISTADO
+  getActas: async (page = 1, limit = 10, search = "") => {
     const response = await api.get(
-      `/actas?page=${page}&limit=${limit}&search=${search}`,
+      `/actas?page=${page}&limit=${limit}&search=${search}`
     );
 
     return {
@@ -82,27 +163,21 @@ export const actaService = {
     };
   },
 
-  // Función para obtener una acta por ID
-  getActaById: async (id: string): Promise<ActaData> => {
-    const rawActa = await api.get(`/actas/${id}`);
-    console.log("RAW BACKEND:", rawActa);
-
-    const mapped = mapBackendToActaData(rawActa);
-    console.log("MAPPED ACTA:", mapped);
-
-    return mapped;
+  // GET BY ID
+  getActaById: async (id: string | number): Promise<ActaData> => {
+    const raw = await api.get(`/actas/${id}`);
+    return mapBackendToActaData(raw);
   },
 
-  // Función para actualizar una acta existente
-  updateActa: async (id: string, payload: any) => {
-    const { diademaMarcaId, diademaSerial, ...cleanPayload } = payload;
+  // UPDATE
+  updateActa: async (
+    id: string | number,
+    payload: ActaPayload
+  ): Promise<ActaData> => {
+    const mapped = mapPayloadToBackend(payload);
 
-    const rawActa = await api.put(`/actas/${id}`, {
-      ...cleanPayload,
-      diadema_marca_id: diademaMarcaId ?? null,
-      diadema_serial: diademaSerial ?? null,
-    });
+    const raw = await api.put(`/actas/${id}`, mapped);
 
-    return mapBackendToActaData(rawActa);
+    return mapBackendToActaData(raw);
   },
 };

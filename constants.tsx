@@ -1,6 +1,6 @@
 
 import { Laptop } from 'lucide-react';
-import { HeaderConfig } from './types';
+import { HeaderConfig } from './src/types/types';
 
 export const CEM_HEADER_CONFIG: HeaderConfig = {
   codigo: '-DC-012FO',
@@ -12,7 +12,8 @@ export const ACCESORIOS_DISPONIBLES = [
   "CARGADOR",
   "DIADEMAS",
   "TECLADO",
-  "MOUSE"
+  "MOUSE",
+  "CELULAR"
 ];
 
 export const INITIAL_ACTA_DATA = {
@@ -22,7 +23,7 @@ export const INITIAL_ACTA_DATA = {
   cargo: '',
   sede: '',
   equipo: '',
-  marca: '',
+  latopSerial: '',
   accesorios: '',
   estado: 'FUNCIONAL',
   observaciones: '',

@@ -1,6 +1,6 @@
 import React from "react";
 import { FileText, Plus, LayoutDashboard, Moon, Sun } from "lucide-react";
-import { View } from "../../../types";
+import { View } from "../../types/types";
 
 interface NavbarProps {
   view: View;

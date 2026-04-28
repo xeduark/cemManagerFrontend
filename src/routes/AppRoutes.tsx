@@ -5,7 +5,7 @@ import DashboardPage from "../pages/DashboardPage";
 import CreateActaPage from "../pages/CreateActaPage";
 import PreviewWrapper from "../components/wrappers/ActaPreviewWrapper";
 import { useNavigate } from "react-router-dom";
-import { ActaData } from "../../types";
+import { ActaData } from "../types/types";
 interface AppRoutesProps {
   history: ActaData[];
   currentActa: ActaData;

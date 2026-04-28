@@ -7,7 +7,7 @@ import {
   FileUp,
   Loader2,
 } from "lucide-react";
-import { ActaData } from "../../types";
+import { ActaData } from "../types/types";
 import { actaService } from "../services/acta.service";
 import { useState, useEffect } from "react";
 interface DashboardPageProps {

@@ -1,18 +1,35 @@
 import React from "react";
 import { BrainCircuit, Loader2, Check } from "lucide-react";
-import { ActaData } from "../../../types";
+import { ActaData } from "../../types/types";
 import { ACCESORIOS_DISPONIBLES } from "../../../constants";
 import { getSedes } from "../../services/sede.service";
 import { getCargos } from "../../services/cargo.service";
 import { getDiademaMarcas } from "../../services/marcaDiadema.service";
 import { getLaptopMarcas } from "../../services/laptopMarca.service";
-import Select from "react-select";
+import { getOperadores } from "../../services/operador.service";
 
-//props que recibe el formulario para crear acta, se pasan desde CreateActaPage
+import {
+  Input,
+  TextArea,
+  Button,
+  CustomSelect,
+  Card,
+  Section,
+  AccessoryButton,
+} from "../ui";
+
+import { CargoResponse } from "../../types/jobTitle.types";
+import { SedeResponse } from "../../types/sedes.types";
+
+type Marca = {
+  id: number;
+  nombre: string;
+};
+
 interface ActaFormProps {
   acta: ActaData;
   setActa: (acta: ActaData) => void;
-  users: any[];
+  users: { id: number; nombre: string; dni: string }[];
   selectedUserId: string;
   setSelectedUserId: (id: string) => void;
   isAIThinking: boolean;
@@ -23,7 +40,6 @@ interface ActaFormProps {
   mode: "create" | "edit";
 }
 
-//props para el formulario de creación de acta, se encarga de renderizar los campos y manejar la lógica de selección de accesorios, usuarios, cargos y sedes. También tiene botones para mejorar el texto con IA, guardar el acta y previsualizar el formato.
 const ActaForm: React.FC<ActaFormProps> = ({
   acta,
   setActa,
@@ -37,410 +53,190 @@ const ActaForm: React.FC<ActaFormProps> = ({
   isSaving,
   mode,
 }) => {
-  const [cargos, setCargos] = React.useState<any[]>([]);
-  const [loadingCargos, setLoadingCargos] = React.useState(true);
-  const [sedes, setSedes] = React.useState<any[]>([]);
-  const [loadingSedes, setLoadingSedes] = React.useState(true);
-  const [diademaMarcas, setDiademaMarcas] = React.useState<any[]>([]);
-  const [loadingMarcas, setLoadingMarcas] = React.useState(true);
-  const hasDiademas = acta.accesorios?.includes("DIADEMAS");
-  const [laptopMarcas, setLaptopMarcas] = React.useState<any[]>([]);
-  const [loadingLaptopMarcas, setLoadingLaptopMarcas] = React.useState(true);
+  const [cargos, setCargos] = React.useState<CargoResponse[]>([]);
+  const [sedes, setSedes] = React.useState<SedeResponse[]>([]);
+  const [diademaMarcas, setDiademaMarcas] = React.useState<Marca[]>([]);
+  const [laptopMarcas, setLaptopMarcas] = React.useState<Marca[]>([]);
+  const [operadores, setOperadores] = React.useState<Marca[]>([]);
 
-  React.useEffect(() => {
-    const fetchCargos = async () => {
-      try {
-        const data = await getCargos();
-        setCargos(data);
-      } catch (error) {
-        console.error("Error cargando cargos", error);
-      } finally {
-        setLoadingCargos(false);
-      }
-    };
-    fetchCargos();
-  }, []);
+  const accesoriosList = acta.accesorios?.split(", ") || [];
+  const hasDiademas = accesoriosList.includes("DIADEMAS");
+  const hasCelular = accesoriosList.includes("CELULAR");
 
+  // FETCH
   React.useEffect(() => {
-    const fetchSedes = async () => {
-      try {
-        const data = await getSedes();
-        setSedes(data);
-      } catch (error) {
-        console.error("Error cargando sedes", error);
-      } finally {
-        setLoadingSedes(false);
-      }
-    };
-    fetchSedes();
+    getCargos().then(setCargos);
+    getSedes().then(setSedes);
+    getLaptopMarcas().then(setLaptopMarcas);
   }, []);
 
   React.useEffect(() => {
     if (!hasDiademas || diademaMarcas.length > 0) return;
-
-    const fetchMarcas = async () => {
-      try {
-        setLoadingMarcas(true);
-        const data = await getDiademaMarcas();
-        setDiademaMarcas(data);
-      } catch (err) {
-        console.error("Error cargando marcas", err);
-      } finally {
-        setLoadingMarcas(false);
-      }
-    };
-
-    fetchMarcas();
+    getDiademaMarcas().then(setDiademaMarcas);
   }, [hasDiademas]);
 
   React.useEffect(() => {
-    const fetchLaptopMarcas = async () => {
-      try {
-        const data = await getLaptopMarcas();
-        setLaptopMarcas(data);
-      } catch (error) {
-        console.error("Error cargando marcas de laptop", error);
-      } finally {
-        setLoadingLaptopMarcas(false);
-      }
+    if (!hasCelular) return;
+
+    if (operadores.length === 0) {
+      getOperadores().then(setOperadores);
+    }
+  }, [hasCelular]);
+
+  // LOGIC
+  const toggleAccessory = (acc: string) => {
+    const exists = accesoriosList.includes(acc);
+
+    const updated = exists
+      ? accesoriosList.filter((item) => item !== acc)
+      : [...accesoriosList, acc];
+
+    const newActa: ActaData = {
+      ...acta,
+      accesorios: updated.join(", "),
     };
 
-    fetchLaptopMarcas();
-  }, []);
-
-  const toggleAccessory = (acc: string) => {
-    const currentList = acta.accesorios ? acta.accesorios.split(", ") : [];
-
-    let newList: string[];
-
-    if (currentList.includes(acc)) {
-      //  QUITAR accesorio
-      newList = currentList.filter((item) => item !== acc);
-
-      //  CASO ESPECIAL: DIADEMAS
-      if (acc === "DIADEMAS") {
-        setActa({
-          ...acta,
-          accesorios: newList.join(", "),
-          diademaMarcaId: undefined,
-          diademaSerial: "",
-        });
-        return;
-      }
-    } else {
-      // ✅ AGREGAR accesorio
-      newList = [...currentList, acc];
+    if (acc === "DIADEMAS" && exists) {
+      newActa.diademaMarcaId = undefined;
+      newActa.diademaSerial = "";
     }
 
-    setActa({
-      ...acta,
-      accesorios: newList.join(", "),
-    });
-  };
+    if (acc === "CELULAR" && exists) {
+      newActa.celularNumero = "";
+      newActa.celularImei = "";
+      newActa.celularMarca = "";
+      newActa.celularOperadorId = undefined;
+    }
 
-  // Styles personalizados para react-select
-  const selectStyles = {
-    control: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: "var(--bg-input)",
-      border: "2px solid transparent",
-      borderRadius: "16px",
-      padding: "8px 10px",
-      minHeight: "56px",
-      color: "var(--text-main)",
-      boxShadow: "none",
-      borderColor: state.isFocused ? "var(--primary)" : "transparent",
-      "&:hover": {
-        borderColor: "var(--border-hover)",
-      },
-    }),
-
-    singleValue: (base: any) => ({
-      ...base,
-      color: "var(--text-main)",
-      fontWeight: 700,
-    }),
-
-    placeholder: (base: any) => ({
-      ...base,
-      color: "var(--text-muted)",
-      fontWeight: 700,
-    }),
-
-    menu: (base: any) => ({
-      ...base,
-      backgroundColor: "var(--bg-card)",
-      borderRadius: "12px",
-    }),
-
-    menuList: (base: any) => ({
-      ...base,
-      backgroundColor: "var(--bg-card)",
-      padding: "6px",
-    }),
-
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? "var(--primary)"
-        : state.isFocused
-          ? "var(--bg-input)"
-          : "transparent",
-
-      color: state.isSelected
-        ? "white"
-        : state.isFocused
-          ? "var(--primary)" // 🔵 texto azul al pasar el mouse
-          : "var(--text-main)",
-
-      cursor: "pointer",
-      fontWeight: 600,
-      borderRadius: "8px",
-      padding: "10px 12px",
-    }),
+    setActa(newActa);
   };
 
   return (
     <div className="space-y-8">
-      <div
-        className="p-10 rounded-[2.5rem] shadow-sm border"
-        style={{
-          background: "var(--bg-card)",
-          borderColor: "var(--border-color)",
-        }}
-      >
-        <h3
-          className="text-lg font-bold mb-8 flex items-center gap-3"
-          style={{ color: "var(--text-main)" }}
-        >
-          <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
-          Datos del Destinatario
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-2">
-            <label
-              className="text-[11px] font-black uppercase tracking-widest ml-1"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Nombre Completo
-            </label>
-
-            <input
-              type="text"
-              required
-              className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
-              value={acta.recibidoPorNombre}
+      <Card>
+        {/* DESTINATARIO */}
+        <Section title="Datos del Destinatario" color="blue">
+          <div className="grid md:grid-cols-2 gap-8">
+            <Input
+              placeholder="Nombre completo"
+              value={acta.recibidoPorNombre ?? ""}
               onChange={(e) =>
                 setActa({ ...acta, recibidoPorNombre: e.target.value })
               }
-              placeholder="Ej: Edward Muñoz Q"
             />
-          </div>
 
-          <div className="space-y-2">
-            <label
-              className="text-[11px] font-black uppercase tracking-widest ml-1"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Cédula (CC)
-            </label>
-
-            <input
-              type="number"
-              required
-              className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
-              value={acta.recibidoPorCC}
+            <Input
+              placeholder="Cédula"
+              value={acta.recibidoPorCC ?? ""}
               onChange={(e) =>
                 setActa({ ...acta, recibidoPorCC: e.target.value })
               }
             />
-          </div>
 
-          <div className="space-y-2">
-            <label
-              className="text-[11px] font-black uppercase tracking-widest ml-1"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Cargo
-            </label>
-
-            <Select
-              placeholder={
-                loadingCargos ? "Cargando cargos..." : "Seleccionar cargo..."
-              }
-              options={cargos.map((cargo) => ({
-                value: cargo.nombre,
-                label: cargo.nombre,
+            <CustomSelect
+              placeholder="Cargo"
+              options={cargos.map((c) => ({
+                value: c.id,
+                label: c.nombre,
               }))}
               value={
-                acta.cargo ? { value: acta.cargo, label: acta.cargo } : null
+                acta.cargoId
+                  ? {
+                      value: acta.cargoId,
+                      label: cargos.find((c) => c.id === acta.cargoId)?.nombre,
+                    }
+                  : null
               }
-              onChange={(option) =>
-                setActa({ ...acta, cargo: option?.value || "" })
-              }
-              isSearchable
-              styles={selectStyles}
+              onChange={(o: any) => setActa({ ...acta, cargoId: o?.value })}
             />
-          </div>
 
-          <div className="space-y-2">
-            <label
-              className="text-[11px] font-black uppercase tracking-widest ml-1"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Sede Destino
-            </label>
-
-            <Select
-              placeholder={
-                loadingSedes ? "Cargando sedes..." : "Seleccionar sede..."
-              }
-              options={sedes.map((sede) => ({
-                value: sede.nombre,
-                label: sede.nombre,
+            <CustomSelect
+              placeholder="Sede"
+              options={sedes.map((s) => ({
+                value: s.id, // ✅ ID (NO nombre)
+                label: s.nombre,
               }))}
-              value={acta.sede ? { value: acta.sede, label: acta.sede } : null}
-              onChange={(option) =>
-                setActa({ ...acta, sede: option?.value || "" })
+              value={
+                acta.sedeId
+                  ? {
+                      value: acta.sedeId,
+                      label: sedes.find((s) => s.id === acta.sedeId)?.nombre,
+                    }
+                  : null
               }
-              isSearchable
-              styles={selectStyles}
+              onChange={(o: any) => setActa({ ...acta, sedeId: o?.value })}
             />
           </div>
-        </div>
+        </Section>
 
-        <div
-          className="mt-12 pt-12 border-t"
-          style={{ borderColor: "var(--border-color)" }}
-        >
-          <h3
-            className="text-lg font-bold mb-8 flex items-center gap-3"
-            style={{ color: "var(--text-main)" }}
-          >
-            <div className="w-2 h-6 bg-amber-500 rounded-full"></div>
-            Información Técnica
-          </h3>
+        {/* EQUIPO */}
+        <Section title="Información Técnica" color="yellow">
+          <div className="grid md:grid-cols-2 gap-8">
+            <Input
+              placeholder="Equipo / Placa"
+              value={acta.equipo ?? ""}
+              onChange={(e) => setActa({ ...acta, equipo: e.target.value })}
+            />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label
-                className="text-[11px] font-black uppercase tracking-widest ml-1"
-                style={{ color: "var(--text-muted)" }}
-              >
-                Equipo / Placa
-              </label>
+            <CustomSelect
+              placeholder="Marca Laptop"
+              options={laptopMarcas.map((m) => ({
+                value: m.id,
+                label: m.nombre,
+              }))}
+              value={
+                laptopMarcas.find((m) => m.id === acta.laptopMarcaId)
+                  ? {
+                      value: acta.laptopMarcaId,
+                      label: laptopMarcas.find(
+                        (m) => m.id === acta.laptopMarcaId,
+                      )!.nombre,
+                    }
+                  : null
+              }
+              onChange={(o: any) =>
+                setActa({
+                  ...acta,
+                  laptopMarcaId: o ? Number(o.value) : undefined,
+                })
+              }
+            />
 
-              <input
-                type="text"
-                required
-                className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
-                value={acta.equipo}
-                onChange={(e) => setActa({ ...acta, equipo: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
-                Marca Laptop
-              </label>
-
-              <Select
-                placeholder={
-                  loadingLaptopMarcas
-                    ? "Cargando marcas..."
-                    : "Seleccionar marca..."
-                }
-                options={laptopMarcas.map((m) => ({
-                  value: m.id,
-                  label: m.nombre,
-                }))}
-                value={
-                  acta.laptopMarcaId
-                    ? {
-                        value: acta.laptopMarcaId,
-                        label: laptopMarcas.find(
-                          (m) => m.id === acta.laptopMarcaId,
-                        )?.nombre,
-                      }
-                    : null
-                }
-                onChange={(option) =>
-                  setActa({
-                    ...acta,
-                    laptopMarcaId: option?.value,
-                  })
-                }
-                isSearchable
-                styles={selectStyles}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label
-                className="text-[11px] font-black uppercase tracking-widest ml-1"
-                style={{ color: "var(--text-muted)" }}
-              >
-                No. Serial
-              </label>
-
-              <input
-                type="text"
-                required
-                className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
-                value={acta.marca}
-                onChange={(e) => setActa({ ...acta, marca: e.target.value })}
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-3">
-              <label
-                className="text-[11px] font-black uppercase tracking-widest ml-1"
-                style={{ color: "var(--text-muted)" }}
-              >
-                Accesorios Incluidos
-              </label>
-
-              <div className="flex flex-wrap gap-3">
-                {ACCESORIOS_DISPONIBLES.map((acc) => {
-                  const isSelected = acta.accesorios?.split(", ").includes(acc);
-                  return (
-                    <button
-                      key={acc}
-                      type="button"
-                      onClick={() => toggleAccessory(acc)}
-                      className={`accessory-btn px-5 py-3 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border-2 border-transparent ${
-                        isSelected ? "selected" : ""
-                      }`}
-                      style={{
-                        background: isSelected
-                          ? "var(--primary)"
-                          : "var(--bg-input)",
-                        color: isSelected ? "white" : "var(--text-muted)",
-                      }}
-                    >
-                      {isSelected && <Check className="w-4 h-4" />}
-                      {acc}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <Input
+              placeholder="Serial"
+              value={acta.laptopSerial || ""}
+              onChange={(e) =>
+                setActa({ ...acta, laptopSerial: e.target.value })
+              }
+            />
           </div>
-        </div>
+        </Section>
 
+        {/* ACCESORIOS */}
+        <Section title="Accesorios" color="blue">
+          <div className="flex flex-wrap gap-3">
+            {ACCESORIOS_DISPONIBLES.map((acc) => {
+              const selected = accesoriosList.includes(acc);
+
+              return (
+                <AccessoryButton
+                  key={acc}
+                  selected={selected}
+                  onClick={() => toggleAccessory(acc)}
+                >
+                  {selected && <Check size={14} />} {acc}
+                </AccessoryButton>
+              );
+            })}
+          </div>
+        </Section>
+
+        {/* DIADEMAS */}
         {hasDiademas && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-            {/* MARCA */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
-                Marca Diadema
-              </label>
-
-              <Select
-                placeholder={
-                  loadingMarcas ? "Cargando marcas..." : "Seleccionar marca..."
-                }
+          <Section title="Diademas" color="yellow">
+            <div className="grid md:grid-cols-2 gap-6">
+              <CustomSelect
+                placeholder="Marca Diadema"
                 options={diademaMarcas.map((m) => ({
                   value: m.id,
                   label: m.nombre,
@@ -455,26 +251,16 @@ const ActaForm: React.FC<ActaFormProps> = ({
                       }
                     : null
                 }
-                onChange={(option) =>
+                onChange={(o: any) =>
                   setActa({
                     ...acta,
-                    diademaMarcaId: option?.value,
+                    diademaMarcaId: o ? Number(o.value) : undefined,
                   })
                 }
-                isSearchable
-                styles={selectStyles}
               />
-            </div>
 
-            {/* SERIAL */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-widest ml-1">
-                Serial Diadema
-              </label>
-
-              <input
-                type="text"
-                className="input-field w-full px-5 py-4 text-sm font-bold outline-none shadow-inner focus:border-blue-500"
+              <Input
+                placeholder="Serial Diadema"
                 value={acta.diademaSerial || ""}
                 onChange={(e) =>
                   setActa({
@@ -482,42 +268,88 @@ const ActaForm: React.FC<ActaFormProps> = ({
                     diademaSerial: e.target.value,
                   })
                 }
-                placeholder="Ej: 2536AY13B3"
               />
             </div>
-          </div>
+          </Section>
         )}
 
-        <div className="mt-8 space-y-2">
-          <label
-            className="text-[11px] font-black uppercase tracking-widest ml-1"
-            style={{ color: "var(--text-muted)" }}
-          >
-            Entregado por
-          </label>
+        {/* CELULAR */}
+        {hasCelular && (
+          <Section title="Celular" color="yellow">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input
+                placeholder="Número"
+                value={acta.celularNumero || ""}
+                onChange={(e) =>
+                  setActa({ ...acta, celularNumero: e.target.value })
+                }
+              />
 
-          <Select
-            placeholder="Seleccionar usuario..."
-            options={users.map((user) => ({
-              value: user.id,
-              label: user.nombre,
+              <CustomSelect
+                placeholder="Operador"
+                options={operadores.map((o) => ({
+                  value: o.id,
+                  label: o.nombre,
+                }))}
+                value={
+                  acta.celularOperadorId
+                    ? {
+                        value: acta.celularOperadorId,
+                        label: operadores.find(
+                          (o) => o.id === acta.celularOperadorId,
+                        )?.nombre,
+                      }
+                    : null
+                }
+                onChange={(o: any) =>
+                  setActa({
+                    ...acta,
+                    celularOperadorId: o ? Number(o.value) : undefined,
+                  })
+                }
+              />
+
+              <Input
+                placeholder="IMEI"
+                value={acta.celularImei || ""}
+                onChange={(e) =>
+                  setActa({ ...acta, celularImei: e.target.value })
+                }
+              />
+
+              <Input
+                placeholder="Marca"
+                value={acta.celularMarca || ""}
+                onChange={(e) =>
+                  setActa({ ...acta, celularMarca: e.target.value })
+                }
+              />
+            </div>
+          </Section>
+        )}
+
+        {/* USUARIO */}
+        <Section title="Entrega" color="blue">
+          <CustomSelect
+            placeholder="Entregado por"
+            options={users.map((u) => ({
+              value: u.id,
+              label: `${u.nombre} - ${u.dni}`,
             }))}
             value={
               selectedUserId
                 ? {
                     value: selectedUserId,
-                    label: users.find((u) => u.id.toString() === selectedUserId)
-                      ?.nombre,
+                    label:
+                      users.find((u) => u.id === Number(selectedUserId))
+                        ?.nombre || "",
                   }
                 : null
             }
-            onChange={(option) => {
-              const userId = option?.value?.toString() || "";
-              setSelectedUserId(userId);
-
-              const user = users.find((u) => u.id.toString() === userId);
-
+            onChange={(o: any) => {
+              const user = users.find((u) => u.id === Number(o?.value));
               if (user) {
+                setSelectedUserId(String(user.id));
                 setActa({
                   ...acta,
                   entregadoPorNombre: user.nombre,
@@ -525,81 +357,51 @@ const ActaForm: React.FC<ActaFormProps> = ({
                 });
               }
             }}
-            isSearchable
-            styles={selectStyles}
           />
-        </div>
-
-        <div
-          className=" mt-12 pt-12 border-t"
-          style={{ borderColor: "var(--border-color)" }}
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h3
-              className="text-lg font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
-            >
-              Observaciones Técnicas
-            </h3>
-
-            <button
-              type="button"
+        </Section>
+        {/* OBSERVACIONES */}
+        <Section
+          title="Observaciones"
+          color="blue"
+          action={
+            <Button
+              variant="secondary"
               onClick={onSmartAI}
-              disabled={isAIThinking || !acta.observaciones}
-              className="px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all disabled:opacity-50"
-              style={{
-                background: "var(--btn-secondary-bg)",
-                color: "var(--btn-secondary-text)",
-              }}
+              disabled={isAIThinking}
             >
               {isAIThinking ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="animate-spin" />
               ) : (
-                <BrainCircuit className="w-4 h-4" />
+                <BrainCircuit />
               )}
-              Redactar con IA
-            </button>
-          </div>
-
-          <textarea
-            className="w-full border-2 border-transparent focus:border-blue-500 rounded-[2.5rem] px-8 py-7 text-sm font-medium outline-none min-h-[160px] shadow-inner transition-all resize-none"
-            style={{
-              background: "var(--bg-input)",
-              color: "var(--text-main)",
-            }}
-            placeholder="Escribe el estado del equipo aquí..."
+            </Button>
+          }
+        >
+          <TextArea
             value={acta.observaciones}
             onChange={(e) =>
               setActa({ ...acta, observaciones: e.target.value })
             }
           />
+        </Section>
+
+        {/* BOTONES */}
+        <div className="flex gap-4 mt-6">
+          <Button variant="success" onClick={onSave} disabled={isSaving}>
+            {isSaving
+              ? mode === "edit"
+                ? "Actualizando..."
+                : "Guardando..."
+              : mode === "edit"
+                ? "Actualizar"
+                : "Guardar"}
+          </Button>
+
+          <Button variant="primary" onClick={onPreview}>
+            Previsualizar
+          </Button>
         </div>
-      </div>
-
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={isSaving}
-          className="flex-1 btn-save py-5 rounded-[2.5rem] font-black text-lg disabled:opacity-50"
-        >
-          {isSaving
-            ? mode === "edit"
-              ? "Actualizando..."
-              : "Guardando..."
-            : mode === "edit"
-              ? "Actualizar Acta"
-              : "Guardar Acta"}
-        </button>
-
-        <button
-          type="button"
-          onClick={onPreview}
-          className="flex-1 btn-preview py-5 rounded-[2.5rem] font-black text-lg"
-        >
-          Previsualizar Formato
-        </button>
-      </div>
+      </Card>
     </div>
   );
 };

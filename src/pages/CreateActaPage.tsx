@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ActaData } from "../../types";
+import { ActaData } from "../types/types";
 import { backendService } from "../services/api";
 import { getSystemUsers } from "../services/user.service";
 import { actaService } from "../services/acta.service";
 import ActaForm from "../components/form/CreateActaForm";
 import { useParams } from "react-router-dom";
+import { useAlert } from "../hooks/useAlert";
+import Swal from "sweetalert2";
 
 interface CreateActaPageProps {
   acta: ActaData;
@@ -20,13 +22,19 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
   onCancel,
 }) => {
   const { id } = useParams();
+
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingActa, setIsLoadingActa] = useState(false);
 
+  const mode = id ? "edit" : "create";
+
+  // ✅ IA
   const handleSmartAI = async () => {
     if (!acta.observaciones) return;
+
     setIsAIThinking(true);
     try {
       const improved = await backendService.generarActa(acta.observaciones);
@@ -37,113 +45,165 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
       setIsAIThinking(false);
     }
   };
-  const mode = id ? "edit" : "create";
-  // Validación básica de campos obligatorios antes de mostrar la vista previa
 
-  const [isLoadingActa, setIsLoadingActa] = useState(false); // Estado para controlar la carga del acta al editar
-  // Función para validar los campos obligatorios del formulario
+  // ✅ ALERTAS
+  const alert = useAlert();
 
+  // ✅ VALIDACIÓN DE FORMULARIO
   const validateForm = () => {
-    const missingFields: string[] = [];
-    if (!acta.recibidoPorNombre) missingFields.push("Nombre Completo");
-    if (!acta.recibidoPorCC) missingFields.push("Cédula (CC)");
-    if (!acta.cargo) missingFields.push("Cargo / Posición");
-    if (!acta.sede) missingFields.push("Sede Destino");
-    if (!acta.equipo) missingFields.push("Equipo / Modelo");
-    if (!acta.marca) missingFields.push("Marca / No. Serial");
-    if (!acta.entregadoPorNombre) missingFields.push("Entregado por (Usuario)");
+    const errors: string[] = [];
 
+    if (!acta.recibidoPorNombre?.trim()) {
+      errors.push("Nombre Completo");
+    }
+
+    if (!acta.recibidoPorCC?.trim()) {
+      errors.push("Cédula (CC)");
+    }
+
+    if (!acta.cargoId) {
+      errors.push("Cargo ");
+    }
+
+    if (!acta.sedeId) {
+      errors.push("Sede Destino");
+    }
+
+    if (!acta.equipo?.trim()) {
+      errors.push("Equipo / Modelo");
+    }
+
+    if (!acta.laptopSerial?.trim()) {
+      errors.push("Serial del equipo");
+    }
+
+    if (!acta.entregadoPorNombre?.trim()) {
+      errors.push("Entregado por (Usuario)");
+    }
+
+    // 🔥 Validación condicional
     const hasDiademas = acta.accesorios?.includes("DIADEMAS");
 
     if (hasDiademas) {
       if (!acta.diademaMarcaId) {
-        missingFields.push("Marca de la Diadema");
+        errors.push("Marca de la Diadema");
       }
 
       if (!acta.diademaSerial?.trim()) {
-        missingFields.push("Serial de la Diadema");
+        errors.push("Serial de la Diadema");
       }
     }
-    if (missingFields.length > 0) {
-      alert(
-        `Por favor complete los siguientes campos obligatorios:\n\n- ${missingFields.join("\n- ")}`,
-      );
+
+    // 🔥 CELULAR
+    const hasCelular = acta.accesorios?.includes("CELULAR");
+
+    if (hasCelular) {
+      if (!acta.celularNumero?.trim()) {
+        errors.push("Número de celular");
+      }
+
+      if (!acta.celularOperadorId) {
+        errors.push("Operador");
+      }
+
+      if (!acta.celularImei?.trim()) {
+        errors.push("IMEI");
+      }
+
+      if (acta.celularImei && acta.celularImei.length !== 15) {
+        errors.push("IMEI debe tener 15 dígitos");
+        alert.warning("Número de IMEI inválido", ["El IMEI debe contener exactamente 15 dígitos numéricos."]);
+        return false;
+      }
+
+      if (!acta.celularMarca?.trim()) {
+        errors.push("Marca del celular");
+      }
+    }
+
+    if (errors.length > 0) {
+      alert.warning("Faltan campos", errors);
       return false;
     }
+
     return true;
   };
 
-  // Función para guardar el acta en estado "draft" antes de la vista previa o impresión
-
+  // ✅ GUARDADO CORREGIDO
   const handleSave = async () => {
-    if (isSaving) return; // Evitar múltiples clics
-    if (!validateForm()) return; // Validar campos antes de guardar
+    if (isSaving) return;
+    if (!validateForm()) return;
 
-    console.log("ACTA QUE SE VA A GUARDAR:", acta);
+    // 🔥 VALIDAR ANTES
+    if (!acta.cargoId || !acta.sedeId) {
+      alert.warning("Selecciona cargo y sede antes de guardar");
+      return;
+    }
+
+    const confirmed = await alert.confirm(
+      acta.id ? "Actualizar acta" : "Guardar acta",
+      "¿Deseas continuar?",
+    );
+
+    if (!confirmed) return;
 
     try {
       setIsSaving(true);
 
       let savedActa;
 
+      const payload = {
+        fecha: acta.fecha,
+        cargoId: acta.cargoId,
+        sedeId: acta.sedeId,
+        equipo: acta.equipo,
+        accesorios: acta.accesorios,
+        observaciones: acta.observaciones,
+        recibidoPorNombre: acta.recibidoPorNombre,
+        recibidoPorCC: acta.recibidoPorCC,
+        entregadoPorNombre: acta.entregadoPorNombre,
+        entregadoPorCC: acta.entregadoPorCC,
+        vistoBueno: acta.vistoBueno,
+        diademaMarcaId: acta.diademaMarcaId,
+        diademaSerial: acta.diademaSerial,
+        laptopMarcaId: acta.laptopMarcaId,
+        laptopSerial: acta.laptopSerial,
+        celular: acta.accesorios?.includes("CELULAR")
+          ? {
+              numero: acta.celularNumero,
+              imei: acta.celularImei,
+              marca: acta.celularMarca,
+              operador_id: acta.celularOperadorId,
+            }
+          : null,
+      };
+
+      console.log("🚀 PAYLOAD FINAL QUE SE ENVÍA:");
+      console.log(payload);
+
       if (acta.id) {
-        savedActa = await actaService.updateActa(acta.id, {
-          fecha: acta.fecha,
-          cargo: acta.cargo,
-          sede: acta.sede,
-          equipo: acta.equipo,
-          marca: acta.marca,
-          accesorios: acta.accesorios,
-          observaciones: acta.observaciones,
-          recibidoPorNombre: acta.recibidoPorNombre,
-          recibidoPorCC: acta.recibidoPorCC,
-          entregadoPorNombre: acta.entregadoPorNombre,
-          entregadoPorCC: acta.entregadoPorCC,
-          vistoBueno: acta.vistoBueno,
-          status: "draft",
-          diademaMarcaId: acta.diademaMarcaId,
-          diademaSerial: acta.diademaSerial,
-        });
+        savedActa = await actaService.updateActa(acta.id, payload);
       } else {
-        //  Si no existe → crear
-        savedActa = await actaService.createActa({
-          fecha: acta.fecha,
-          cargo: acta.cargo,
-          sede: acta.sede,
-          equipo: acta.equipo,
-          marca: acta.marca,
-          accesorios: acta.accesorios,
-          observaciones: acta.observaciones,
-          recibidoPorNombre: acta.recibidoPorNombre,
-          recibidoPorCC: acta.recibidoPorCC,
-          entregadoPorNombre: acta.entregadoPorNombre,
-          entregadoPorCC: acta.entregadoPorCC,
-          vistoBueno: acta.vistoBueno,
-          status: "draft",
-          diademaMarcaId: acta.diademaMarcaId,
-          diademaSerial: acta.diademaSerial,
-        });
+        savedActa = await actaService.createActa(payload);
       }
 
-      console.log("Acta guardada:", savedActa);
+      setActa(savedActa);
 
-      setActa(savedActa); // ⭐ importante para actualizar el estado
-
-      alert("Acta guardada correctamente");
+      alert.success("Acta guardada correctamente");
     } catch (error) {
-      console.error("Error guardando acta", error);
+      console.error("❌ ERROR GUARDANDO ACTA:", error);
+      alert.error("Error", "No se pudo guardar el acta");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Función para manejar la vista previa, primero valida el formulario y luego navega a la vista de previsualización
-
+  // ✅ PREVIEW
   const handlePreview = () => {
     onPreview();
   };
 
-  // Cargar usuarios del sistema al montar el componente
+  // ✅ USERS
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -157,7 +217,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
     loadUsers();
   }, []);
 
-  // Cargar acta existente si se proporciona un ID en la URL (modo edición)
+  // ✅ LOAD ACTA (EDIT)
   useEffect(() => {
     const loadActa = async () => {
       if (!id || id === "draft") return;
@@ -165,7 +225,6 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
       try {
         setIsLoadingActa(true);
         const data = await actaService.getActaById(id);
-        console.log("ACTA EN COMPONENTE:", data);
         setActa(data);
       } catch (error) {
         console.error("Error cargando acta", error);
@@ -177,6 +236,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
     loadActa();
   }, [id, setActa]);
 
+  // ✅ SINCRONIZAR USUARIO
   useEffect(() => {
     if (!acta.entregadoPorNombre || users.length === 0) return;
 
@@ -203,15 +263,18 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
           >
             ← Volver
           </button>
+
           <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
             {acta.id ? `Editar Acta ${acta.actaNumber}` : "Crear Acta"}
           </h2>
+
           <p className="text-gray-500 dark:text-slate-400 font-medium">
             {acta.id
               ? "Edita la información del acta antes de imprimir nuevamente."
               : "Prepara el formato para impresión y firma física."}
           </p>
         </div>
+
         <div className="bg-white dark:bg-slate-900 px-6 py-4 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 text-center ring-1 ring-gray-100 dark:ring-slate-800">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
             Acta No.

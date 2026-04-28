@@ -1,30 +1,48 @@
 
 export interface ActaData {
-  id: string;
+  id: number;
   actaNumber: string;
   fecha: string;
+
   recibidoPorNombre: string;
   recibidoPorCC: string;
+
+  cargoId?: number;
   cargo: string;
+
+  sedeId?: number;
   sede: string;
+  
   equipo: string;
-  marca: string;
+
+  laptopMarcaId?: number;
+  laptopSerial: string; 
+
   accesorios: string;
   estado: string;
   observaciones: string;
+
   entregadoPorNombre?: string;
   entregadoPorCC?: string;
   vistoBueno: string;
+
   fechaDevolucion?: string;
   recibidoPorDevolucion?: string;
-  status: 'draft' | 'pending_scan' | 'uploaded';
+
+
   driveFileId?: string;
   scannedFileName?: string;
-  recibidoPorFirma?: string; // base64 de la firma
-  entregadoPorFirma?: string; // base64 de la firma
+
+  recibidoPorFirma?: string;
+  entregadoPorFirma?: string;
+
   diademaSerial?: string;
   diademaMarcaId?: number;
-  laptopMarcaId?: number;
+
+  celularNumero?: string;
+  celularImei?: string;
+  celularMarca?: string;
+  celularOperadorId?: number;
 }
 
 type User = {

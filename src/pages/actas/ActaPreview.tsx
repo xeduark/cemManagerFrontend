@@ -1,5 +1,5 @@
 import React from "react";
-import { ActaData } from "../../../types";
+import { ActaData } from "../../types/types";
 import { CEM_HEADER_CONFIG } from "../../../constants";
 import SignaturePad from "./SignaturePad";
 
@@ -7,10 +7,11 @@ export interface ActaPreviewProps {
   data: ActaData;
   handlePrint?: () => void;
   triggerUpload?: (actaId: string) => void;
-
   onSaveFirmaRecibido?: (firma: string) => void;
   onSaveFirmaEntregado?: (firma: string) => void;
 }
+
+const safe = (value?: string) => value || "—";
 
 const ActaPreview: React.FC<ActaPreviewProps> = ({
   data,
@@ -19,69 +20,53 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
   onSaveFirmaRecibido,
   onSaveFirmaEntregado,
 }) => {
-  console.log("Número de acta:", data.actaNumber);
   return (
     <div className="paper w-full max-w-[800px] mx-auto bg-white p-[40px] shadow-2xl border border-gray-200 text-[12px] font-sans leading-relaxed min-h-[1050px] relative text-black">
-      {/* Header Table */}
+
+      {/* BOTONES */}
       <div className="mt-4 flex gap-4">
         {handlePrint && (
-          <button
-            onClick={handlePrint}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
+          <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white rounded">
             Imprimir
           </button>
         )}
         {triggerUpload && (
-          <button
-            onClick={() => triggerUpload(data.id)}
-            className="px-4 py-2 bg-green-600 text-white rounded"
-          >
+          <button onClick={() => triggerUpload(data.id)} className="px-4 py-2 bg-green-600 text-white rounded">
             Subir Escaneo
           </button>
         )}
       </div>
+
+      {/* HEADER */}
       <table className="w-full border-collapse border border-black mb-6">
         <tbody>
           <tr>
-            <td className="border border-black p-4 w-1/3 text-center align-middle">
-              <div className="flex items-center justify-center">
-                <img
-                  src="https://res.cloudinary.com/dbhbuhjum/image/upload/f_auto,q_auto/descarga_moi2yv"
-                  alt="Logo Comité"
-                  className="max-h-[80px] object-contain"
-                />
-              </div>
+            <td className="border p-4 w-1/3 text-center">
+              <img
+                src="https://res.cloudinary.com/dbhbuhjum/image/upload/f_auto,q_auto/descarga_moi2yv"
+                alt="Logo"
+                className="max-h-[80px] mx-auto"
+              />
             </td>
-            <td className="border border-black p-4 w-1/3 text-center font-bold text-[14px] align-middle uppercase">
+
+            <td className="border p-4 w-1/3 text-center font-bold text-[14px] uppercase">
               FORMATO ACTA DE ENTREGA DE EQUIPOS
             </td>
-            <td className="border border-black w-1/3 p-0">
-              <table className="w-full border-collapse">
+
+            <td className="border w-1/3 p-0">
+              <table className="w-full">
                 <tbody>
-                  <tr className="border-b border-black">
-                    <td className="p-1 border-r border-black font-semibold text-center w-1/2">
-                      Código:
-                    </td>
-                    <td className="p-1 text-center font-bold">
-                      {CEM_HEADER_CONFIG.codigo}
-                    </td>
+                  <tr className="border-b">
+                    <td className="p-1 border-r text-center font-semibold">Código:</td>
+                    <td className="text-center font-bold">{CEM_HEADER_CONFIG.codigo}</td>
                   </tr>
-                  <tr className="border-b border-black">
-                    <td className="p-1 border-r border-black font-semibold text-center">
-                      Versión:
-                    </td>
-                    <td className="p-1 text-center font-bold">
-                      {CEM_HEADER_CONFIG.version}
-                    </td>
+                  <tr className="border-b">
+                    <td className="p-1 border-r text-center font-semibold">Versión:</td>
+                    <td className="text-center font-bold">{CEM_HEADER_CONFIG.version}</td>
                   </tr>
                   <tr>
-                    <td className="p-1 border-r border-black font-semibold text-center">
-                      Fecha:
-                    </td>
-                    <td className="p-1 text-center font-bold">
-                      {CEM_HEADER_CONFIG.fechaFormato}
-                    </td>
+                    <td className="p-1 border-r text-center font-semibold">Fecha:</td>
+                    <td className="text-center font-bold">{CEM_HEADER_CONFIG.fechaFormato}</td>
                   </tr>
                 </tbody>
               </table>
@@ -90,163 +75,113 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
         </tbody>
       </table>
 
-      {/* Date */}
-      <div className="mb-4 font-bold text-[13px] flex justify-between">
-        <span>FECHA: {data.fecha}</span>
-        <span className="text-gray-400"># {data.actaNumber}</span>
+      {/* FECHA */}
+      <div className="mb-4 font-bold flex justify-between">
+        <span>FECHA: {safe(data.fecha)}</span>
+        <span className="text-gray-400"># {safe(data.actaNumber)}</span>
       </div>
 
-      {/* Main Form Fields */}
-      <div className="border border-black mb-4">
+      {/* CAMPOS */}
+      <div className="border mb-4">
         {[
-          { label: "Nombre", value: data.recibidoPorNombre },
-          { label: "Cargo", value: data.cargo },
-          { label: "Sede", value: data.sede },
-          { label: "Equipo:", value: data.equipo },
-          { label: "Marca:", value: data.marca },
-          { label: "Accesorios:", value: data.accesorios },
-          { label: "Estado:", value: data.estado },
-          { label: "Observaciones:", value: data.observaciones },
-          // { label: 'Departamento', value: data.departamento }, // Campo opcional comentado
-        ].map((row, idx) => (
-          <div key={idx} className="flex border-b border-black last:border-0">
-            <div className="w-[150px] font-bold p-2 border-r border-black bg-gray-50">
-              {row.label}
+          ["Nombre", data.recibidoPorNombre],
+          ["Cargo", data.cargo],
+          ["Sede", data.sede],
+          ["Equipo", data.equipo],
+          ["Serial", data.laptopSerial],
+          ["Accesorios", data.accesorios],
+          ["Estado", data.estado],
+          ["Observaciones", data.observaciones],
+        ].map(([label, value], idx) => (
+          <div key={idx} className="flex border-b last:border-0">
+            <div className="w-[150px] font-bold p-2 border-r bg-gray-50">
+              {label}
             </div>
-            <div className="flex-1 p-2 uppercase text-[11px] min-h-[30px]">
-              {row.value}
+            <div className="flex-1 p-2 uppercase text-[11px]">
+              {safe(value as string)}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Commitment Text */}
-      <p className="text-center mb-8 italic text-[11px] px-8 font-medium">
-        "La persona que firma se hará responsable de los bienes entregados y se
-        compromete a cuidar y hacer buen uso de estos, según las políticas
-        internas de la institución."
+      {/* TEXTO */}
+      <p className="text-center mb-8 italic text-[11px] px-8">
+        "La persona que firma se hará responsable de los bienes entregados."
       </p>
 
-      {/* Signature Section */}
-      <div className="flex border border-black mb-8 min-h-[200px]">
-        {/* Recibido */}
-        <div className="flex-1 border-r border-black flex flex-col">
-          <div className="p-2 border-b border-black font-bold text-center bg-gray-50">
-            Recibido por:
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center p-2">
-            {data.recibidoPorFirma ? (
-              <div className="flex flex-col items-center">
-                <img
-                  src={data.recibidoPorFirma}
-                  className="max-h-24 object-contain"
-                />
+      {/* FIRMAS */}
+      <div className="flex border mb-8 min-h-[200px]">
 
+        {/* RECIBIDO */}
+        <div className="flex-1 border-r flex flex-col">
+          <div className="p-2 border-b font-bold text-center bg-gray-50">
+            Recibido por
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center">
+            {data.recibidoPorFirma && data.recibidoPorFirma.length > 0 ? (
+              <>
+                <img src={data.recibidoPorFirma} className="max-h-24" alt="firma recibido" />
                 <button
                   onClick={() => onSaveFirmaRecibido?.("")}
-                  className="text-[10px] text-red-500 mt-2"
+                  className="text-xs text-red-500 mt-2"
                 >
                   Rehacer firma
                 </button>
-              </div>
+              </>
             ) : (
               <SignaturePad
                 label="Firma quien recibe"
-                onSave={(firma) => onSaveFirmaRecibido?.(firma)}
-                onClear={() => {}}
+                onSave={onSaveFirmaRecibido || (() => {})}
+                onClear={() => onSaveFirmaRecibido?.("")}
               />
             )}
           </div>
-          <div className="p-3 border-t border-black text-[10px] space-y-1">
-            <div className="flex gap-1">
-              <span className="font-bold">Nombre:</span>{" "}
-              <span className="uppercase">{data.recibidoPorNombre}</span>
-            </div>
-            <div className="flex gap-1">
-              <span className="font-bold">CC:</span> {data.recibidoPorCC}
-            </div>
+
+          <div className="p-3 border-t text-[10px]">
+            <div><b>Nombre:</b> {safe(data.recibidoPorNombre)}</div>
+            <div><b>CC:</b> {safe(data.recibidoPorCC)}</div>
           </div>
         </div>
 
-        {/* Entregado */}
+        {/* ENTREGADO */}
         <div className="flex-1 flex flex-col">
-          <div className="p-2 border-b border-black font-bold text-center bg-gray-50">
-            Entregado por:
+          <div className="p-2 border-b font-bold text-center bg-gray-50">
+            Entregado por
           </div>
-          <div className="flex-1 flex flex-col items-center justify-center p-2">
-            {data.entregadoPorFirma ? (
-              <div className="flex flex-col items-center">
-                <img
-                  src={data.entregadoPorFirma}
-                  className="max-h-24 object-contain"
-                />
 
+          <div className="flex-1 flex flex-col items-center justify-center">
+            {data.entregadoPorFirma && data.entregadoPorFirma.length > 0 ? (
+              <>
+                <img src={data.entregadoPorFirma} className="max-h-24" alt="firma entrega" />
                 <button
                   onClick={() => onSaveFirmaEntregado?.("")}
-                  className="text-[10px] text-red-500 mt-2"
+                  className="text-xs text-red-500 mt-2"
                 >
                   Rehacer firma
                 </button>
-              </div>
+              </>
             ) : (
               <SignaturePad
                 label="Firma quien entrega"
-                onSave={(firma) => onSaveFirmaEntregado?.(firma)}
-                onClear={() => {}}
+                onSave={onSaveFirmaEntregado || (() => {})}
+                onClear={() => onSaveFirmaEntregado?.("")}
               />
             )}
           </div>
-          <div className="p-3 border-t border-black text-[10px] space-y-1">
-            <div className="flex gap-1">
-              <span className="font-bold">Nombre:</span>
-              <p>
-                <strong>Entregado por:</strong> {data.entregadoPorNombre}
-              </p>
-            </div>
-            <div className="flex gap-1">
-              <span className="font-bold">CC:</span> {data.entregadoPorCC}
-            </div>
+
+          <div className="p-3 border-t text-[10px]">
+            <div><b>Nombre:</b> {safe(data.entregadoPorNombre)}</div>
+            <div><b>CC:</b> {safe(data.entregadoPorCC)}</div>
           </div>
         </div>
       </div>
 
-      {/* VoBo */}
-      <div className="mb-10 flex items-center gap-10 px-4">
-        <div>
-          <div className="font-bold mb-6 text-[11px]">V.° B.°</div>
-          <div className="border-t border-black w-40 text-center pt-1 font-bold text-[10px] uppercase">
-            {data.vistoBueno}
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="italic text-[10px] text-gray-500 mb-4">
-            Espacio reservado para sello o notas adicionales de
-            almacén/inventario:
-          </div>
-          <div className="border border-dashed border-gray-300 h-16 w-full"></div>
-        </div>
-      </div>
-
-      {/* Devolución */}
-      <div className="mb-12 grid grid-cols-2 gap-4 px-4">
-        <div className="border-b border-black pb-1">
-          Fecha de devolución: _________________
-        </div>
-        <div className="border-b border-black pb-1">
-          Recibido por (Devolución): _________________
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-8 left-[40px] right-[40px]">
-        <div className="flex justify-between items-end border-t border-gray-300 pt-2">
-          <div className="text-[9px] text-gray-400 italic">
-            Una vez descargado o impreso este documento se considera COPIA NO
-            CONTROLADA.
-          </div>
-          <div className="text-[10px] font-black">
-            CEM - ACTA No. {data.actaNumber}
-          </div>
+      {/* VISTO BUENO */}
+      <div className="mb-10 px-4">
+        <div className="font-bold mb-2">V.° B.°</div>
+        <div className="border-t w-40 pt-1 text-center font-bold text-[10px]">
+          {safe(data.vistoBueno)}
         </div>
       </div>
     </div>

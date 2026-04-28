@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter } from "react-router-dom";
 import NavbarWrapper from "./components/wrappers/NavbarWrapper";
 import AppRoutes from "./routes/AppRoutes";
-import { ActaData } from "../types";
+import { ActaData } from "./types/types";
 import { INITIAL_ACTA_DATA } from "../constants";
 import { backendService } from "./services/api";
 
