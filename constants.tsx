@@ -13,30 +13,42 @@ export const ACCESORIOS_DISPONIBLES = [
   "DIADEMAS",
   "TECLADO",
   "MOUSE",
-  "CELULAR"
+  "CELULAR",
+  "BASE REFRIGERANTE"
 ];
 
 export const INITIAL_ACTA_DATA = {
-  id: '',
-  actaNumber: '',
-  fecha: new Date().toLocaleDateString('es-CO'),
-  cargo: '',
-  sede: '',
-  equipo: '',
-  latopSerial: '',
-  accesorios: '',
-  estado: 'FUNCIONAL',
-  observaciones: '',
-  recibidoPorNombre: '',
-  recibidoPorCC: '',
-  entregadoPorNombre: '',
-  entregadoPorCC: '',
-  vistoBueno: 'Isaías Quintero',
-  status: 'draft' as const,
-  diadema_marca: '',
-  diadema_serial: '',
-  Laptop_marca: '',
+  id: 0,
+  actaNumber: "",
+  fecha: new Date().toLocaleDateString("es-CO"),
 
-  recibidoPorFirma: '',
-  entregadoPorFirma: ''
+  cargoId: undefined,
+  sedeId: undefined,
+
+  equipo: "",
+
+  laptopSerial: "",
+  laptopMarcaId: undefined,
+
+  accesorios: [],
+
+  estado: "ABIERTA" as "ABIERTA",
+
+  observaciones: "",
+
+  recibidoPorNombre: "",
+  recibidoPorCC: "",
+
+  entregadoPorNombre: "",
+  entregadoPorCC: "",
+
+  vistoBueno: "Isaías Quintero",
+
+  diademaMarcaId: undefined,
+  diademaSerial: "",
+
+  celularNumero: "",
+  celularImei: "",
+  celularOperadorId: undefined,
+  celularMarcaId: undefined,
 };

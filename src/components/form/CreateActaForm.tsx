@@ -7,6 +7,8 @@ import { getCargos } from "../../services/cargo.service";
 import { getDiademaMarcas } from "../../services/marcaDiadema.service";
 import { getLaptopMarcas } from "../../services/laptopMarca.service";
 import { getOperadores } from "../../services/operador.service";
+import { getCelularMarcas } from "../../services/celularMarca.service";
+import ActaHeader from "../ui/ActaHeader";
 
 import {
   Input,
@@ -58,8 +60,9 @@ const ActaForm: React.FC<ActaFormProps> = ({
   const [diademaMarcas, setDiademaMarcas] = React.useState<Marca[]>([]);
   const [laptopMarcas, setLaptopMarcas] = React.useState<Marca[]>([]);
   const [operadores, setOperadores] = React.useState<Marca[]>([]);
+  const [celularMarcas, setCelularMarcas] = React.useState<Marca[]>([]);
 
-  const accesoriosList = acta.accesorios?.split(", ") || [];
+  const accesoriosList = acta.accesorios || [];
   const hasDiademas = accesoriosList.includes("DIADEMAS");
   const hasCelular = accesoriosList.includes("CELULAR");
 
@@ -83,6 +86,18 @@ const ActaForm: React.FC<ActaFormProps> = ({
     }
   }, [hasCelular]);
 
+  React.useEffect(() => {
+    if (!hasCelular) return;
+
+    if (operadores.length === 0) {
+      getOperadores().then(setOperadores);
+    }
+
+    if (celularMarcas.length === 0) {
+      getCelularMarcas().then(setCelularMarcas);
+    }
+  }, [hasCelular]);
+
   // LOGIC
   const toggleAccessory = (acc: string) => {
     const exists = accesoriosList.includes(acc);
@@ -93,7 +108,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
 
     const newActa: ActaData = {
       ...acta,
-      accesorios: updated.join(", "),
+      accesorios: updated,
     };
 
     if (acc === "DIADEMAS" && exists) {
@@ -104,8 +119,8 @@ const ActaForm: React.FC<ActaFormProps> = ({
     if (acc === "CELULAR" && exists) {
       newActa.celularNumero = "";
       newActa.celularImei = "";
-      newActa.celularMarca = "";
       newActa.celularOperadorId = undefined;
+      newActa.celularMarcaId = undefined;
     }
 
     setActa(newActa);
@@ -114,6 +129,20 @@ const ActaForm: React.FC<ActaFormProps> = ({
   return (
     <div className="space-y-8">
       <Card>
+        <ActaHeader
+          title={mode === "edit" ? "Editar Acta" : "Nueva Acta"}
+          subtitle="Control del estado del documento"
+          estado={acta.estado}
+          onChangeEstado={
+            mode === "edit"
+              ? (nuevo) =>
+                  setActa({
+                    ...acta,
+                    estado: nuevo,
+                  })
+              : undefined
+          }
+        />
         {/* DESTINATARIO */}
         <Section title="Datos del Destinatario" color="blue">
           <div className="grid md:grid-cols-2 gap-8">
@@ -153,7 +182,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
             <CustomSelect
               placeholder="Sede"
               options={sedes.map((s) => ({
-                value: s.id, // ✅ ID (NO nombre)
+                value: s.id, // 
                 label: s.nombre,
               }))}
               value={
@@ -173,7 +202,7 @@ const ActaForm: React.FC<ActaFormProps> = ({
         <Section title="Información Técnica" color="yellow">
           <div className="grid md:grid-cols-2 gap-8">
             <Input
-              placeholder="Equipo / Placa"
+              placeholder="Placa"
               value={acta.equipo ?? ""}
               onChange={(e) => setActa({ ...acta, equipo: e.target.value })}
             />
@@ -317,11 +346,27 @@ const ActaForm: React.FC<ActaFormProps> = ({
                 }
               />
 
-              <Input
-                placeholder="Marca"
-                value={acta.celularMarca || ""}
-                onChange={(e) =>
-                  setActa({ ...acta, celularMarca: e.target.value })
+              <CustomSelect
+                placeholder="Marca Celular"
+                options={celularMarcas.map((m) => ({
+                  value: m.id,
+                  label: m.nombre,
+                }))}
+                value={
+                  acta.celularMarcaId
+                    ? {
+                        value: acta.celularMarcaId,
+                        label: celularMarcas.find(
+                          (m) => m.id === acta.celularMarcaId,
+                        )?.nombre,
+                      }
+                    : null
+                }
+                onChange={(o: any) =>
+                  setActa({
+                    ...acta,
+                    celularMarcaId: o ? Number(o.value) : undefined,
+                  })
                 }
               />
             </div>

@@ -1,6 +1,12 @@
-import React, { useRef } from "react";
+import React, {
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
-// signature pad component
+// ==========================================
+// TYPES
+// ==========================================
 
 interface SignaturePadProps {
   label: string;
@@ -8,87 +14,169 @@ interface SignaturePadProps {
   onClear: () => void;
 }
 
-const SignaturePad: React.FC<SignaturePadProps> = ({
-  label,
-  onSave,
-  onClear,
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawing = useRef(false);
-  const hasSigned = useRef(false); // ⭐ detecta si el usuario realmente firmó
+export interface SignaturePadRef {
+  getSignature: () => string | null;
+  clear: () => void;
+}
 
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+// ==========================================
+// COMPONENT
+// ==========================================
+
+const SignaturePad = forwardRef<
+  SignaturePadRef,
+  SignaturePadProps
+>(({ label, onSave, onClear }, ref) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const isDrawing = useRef(false);
+
+  const hasSigned = useRef(false);
+
+  // ==========================================
+  // START DRAW
+  // ==========================================
+
+  const startDrawing = (
+    e: React.MouseEvent | React.TouchEvent,
+  ) => {
     isDrawing.current = true;
 
     const canvas = canvasRef.current;
+
     const ctx = canvas?.getContext("2d");
+
     if (!ctx || !canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - rect.top;
+
+    const x =
+      ("touches" in e
+        ? e.touches[0].clientX
+        : e.clientX) - rect.left;
+
+    const y =
+      ("touches" in e
+        ? e.touches[0].clientY
+        : e.clientY) - rect.top;
 
     ctx.beginPath();
+
     ctx.moveTo(x, y);
   };
 
+  // ==========================================
+  // STOP DRAW
+  // ==========================================
+
   const stopDrawing = () => {
     isDrawing.current = false;
+  };
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // ==========================================
+  // DRAW
+  // ==========================================
 
-    //  evitar guardar firma vacía
-    if (!hasSigned.current) {
+  const draw = (
+    e: React.MouseEvent | React.TouchEvent,
+  ) => {
+    if (!isDrawing.current || !canvasRef.current) {
       return;
     }
 
-    onSave(canvas.toDataURL("image/png"));
-  };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing.current || !canvasRef.current) return;
-
     const canvas = canvasRef.current;
+
     const ctx = canvas.getContext("2d");
+
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - rect.top;
+
+    const x =
+      ("touches" in e
+        ? e.touches[0].clientX
+        : e.clientX) - rect.left;
+
+    const y =
+      ("touches" in e
+        ? e.touches[0].clientY
+        : e.clientY) - rect.top;
 
     ctx.lineWidth = 2;
+
     ctx.lineCap = "round";
+
     ctx.strokeStyle = "#000";
 
     ctx.lineTo(x, y);
+
     ctx.stroke();
 
-    hasSigned.current = true; // ⭐ usuario dibujó algo
+    hasSigned.current = true;
   };
-  // función para limpiar el canvas y resetear el estado de firma
+
+  // ==========================================
+  // CLEAR
+  // ==========================================
+
   const handleClear = () => {
     const canvas = canvasRef.current;
+
     const ctx = canvas?.getContext("2d");
 
     if (canvas && ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      hasSigned.current = false; //  resetear firma
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+
+      hasSigned.current = false;
+
       onClear();
     }
   };
-  //  función para manejar el guardado de la firma, verifica que se haya dibujado algo antes de guardar
+
+  // ==========================================
+  // SAVE
+  // ==========================================
+
   const handleSave = () => {
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     if (!hasSigned.current) {
       alert("Debe realizar una firma antes de guardar.");
+
       return;
     }
 
     onSave(canvas.toDataURL("image/png"));
   };
+
+  // ==========================================
+  // EXPOSE METHODS
+  // ==========================================
+
+  useImperativeHandle(ref, () => ({
+    getSignature: () => {
+      const canvas = canvasRef.current;
+
+      if (!canvas || !hasSigned.current) {
+        return null;
+      }
+
+      return canvas.toDataURL("image/png");
+    },
+
+    clear: handleClear,
+  }));
+
+  // ==========================================
+  // RENDER
+  // ==========================================
 
   return (
     <div className="flex flex-col items-center p-4 border dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800/50 shadow-sm">
@@ -109,8 +197,24 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
       />
+
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={handleClear}
+          className="theme-btn px-4 py-2 text-xs rounded-xl"
+        >
+          Limpiar
+        </button>
+
+        <button
+          onClick={handleSave}
+          className="btn-preview px-4 py-2 text-xs rounded-xl"
+        >
+          Previsualizar Firma
+        </button>
+      </div>
     </div>
   );
-};
+});
 
 export default SignaturePad;

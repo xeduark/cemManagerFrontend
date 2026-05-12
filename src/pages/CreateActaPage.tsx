@@ -6,6 +6,8 @@ import { actaService } from "../services/acta.service";
 import ActaForm from "../components/form/CreateActaForm";
 import { useParams } from "react-router-dom";
 import { useAlert } from "../hooks/useAlert";
+import { firmaService } from "@/services/firma.service";
+import { base64ToFile } from "@/utils/base64ToFile";
 import Swal from "sweetalert2";
 
 interface CreateActaPageProps {
@@ -112,11 +114,13 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
 
       if (acta.celularImei && acta.celularImei.length !== 15) {
         errors.push("IMEI debe tener 15 dígitos");
-        alert.warning("Número de IMEI inválido", ["El IMEI debe contener exactamente 15 dígitos numéricos."]);
+        alert.warning("Número de IMEI inválido", [
+          "El IMEI debe contener exactamente 15 dígitos numéricos.",
+        ]);
         return false;
       }
 
-      if (!acta.celularMarca?.trim()) {
+      if (acta.celularMarcaId == null) {
         errors.push("Marca del celular");
       }
     }
@@ -152,6 +156,21 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
 
       let savedActa;
 
+      const celularPayload =
+        acta.accesorios?.includes("CELULAR") &&
+        acta.celularNumero &&
+        acta.celularImei &&
+        acta.celularMarcaId &&
+        acta.celularOperadorId
+          ? {
+              numero: acta.celularNumero,
+              imei: acta.celularImei,
+              marca_id: acta.celularMarcaId,
+              operador_id: acta.celularOperadorId,
+              modelo: acta.celularModelo || "N/A",
+            }
+          : null;
+
       const payload = {
         fecha: acta.fecha,
         cargoId: acta.cargoId,
@@ -159,6 +178,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
         equipo: acta.equipo,
         accesorios: acta.accesorios,
         observaciones: acta.observaciones,
+        estado: acta.estado,
         recibidoPorNombre: acta.recibidoPorNombre,
         recibidoPorCC: acta.recibidoPorCC,
         entregadoPorNombre: acta.entregadoPorNombre,
@@ -168,14 +188,7 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
         diademaSerial: acta.diademaSerial,
         laptopMarcaId: acta.laptopMarcaId,
         laptopSerial: acta.laptopSerial,
-        celular: acta.accesorios?.includes("CELULAR")
-          ? {
-              numero: acta.celularNumero,
-              imei: acta.celularImei,
-              marca: acta.celularMarca,
-              operador_id: acta.celularOperadorId,
-            }
-          : null,
+        celular: celularPayload,
       };
 
       console.log("🚀 PAYLOAD FINAL QUE SE ENVÍA:");
@@ -252,6 +265,62 @@ const CreateActaPage: React.FC<CreateActaPageProps> = ({
       <div className="p-20 text-center text-gray-500">Cargando acta...</div>
     );
   }
+
+  //Funcion para subir la firma al backend, recibe la firma en base64 y el tipo (RECIBIDO o ENTREGADO)
+  const uploadFirma = async (
+  firma: string,
+  tipo: "RECIBIDO" | "ENTREGADO",
+) => {
+  if (!acta.id) {
+    Swal.fire({
+      icon: "warning",
+      title: "Guarda el acta primero",
+      text: "Debes guardar el acta antes de subir firmas.",
+    });
+
+    return;
+  }
+
+  try {
+    const file = base64ToFile(firma, `firma-${tipo}.png`);
+
+    const response = await firmaService.uploadFirma({
+      firma: file,
+      acta_id: acta.id,
+      tipo,
+
+      nombre:
+        tipo === "RECIBIDO"
+          ? acta.recibidoPorNombre || ""
+          : acta.entregadoPorNombre || "",
+
+      documento:
+        tipo === "RECIBIDO"
+          ? acta.recibidoPorCC || ""
+          : acta.entregadoPorCC || "",
+    });
+
+    console.log("✅ FIRMA SUBIDA:", response);
+
+    Swal.fire({
+      icon: "success",
+      title: "Firma guardada",
+      text: "La firma fue subida correctamente.",
+      timer: 1800,
+      showConfirmButton: false,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("❌ Error subiendo firma:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudo subir la firma.",
+    });
+  }
+};
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500 no-print max-w-4xl mx-auto p-4">

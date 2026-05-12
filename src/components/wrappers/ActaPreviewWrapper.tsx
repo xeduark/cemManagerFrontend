@@ -4,11 +4,13 @@ import { ActaData } from "../../types/types";
 import ActaPreview from "../../pages/actas/ActaPreview";
 import ActaSubNavbar from "../layout/ActaSubNavbar";
 import { Printer, FileUp } from "lucide-react";
+import { firmaService } from "@/services/firma.service";
+import { base64ToFile } from "@/utils/base64ToFile";
+import Swal from "sweetalert2";
 
 interface PreviewWrapperProps {
   currentActa: ActaData;
   setCurrentActa: (acta: ActaData) => void;
-  saveToHistory: (acta: ActaData) => void;
   triggerUpload: (id: string) => void;
   handlePrint: () => void;
 }
@@ -16,7 +18,6 @@ interface PreviewWrapperProps {
 const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
   currentActa,
   setCurrentActa,
-  saveToHistory,
   triggerUpload,
   handlePrint,
 }) => {
@@ -27,19 +28,89 @@ const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
   const actaId = String(id === "draft" ? currentActa.id : id || "");
 
   // ✅ Firma recibido
-  const handleFirmaRecibido = (firma: string) => {
-    setCurrentActa({
-      ...currentActa,
-      recibidoPorFirma: firma,
-    });
+  const handleFirmaRecibido = async (firma: string) => {
+    try {
+      if (!currentActa.id) {
+        Swal.fire({
+          icon: "warning",
+          title: "Guarda el acta primero",
+        });
+
+        return;
+      }
+
+      const file = base64ToFile(firma, "firma-recibido.png");
+
+      const response = await firmaService.uploadFirma({
+        firma: file,
+        acta_id: currentActa.id,
+        tipo: "RECIBIDO",
+        nombre: currentActa.recibidoPorNombre || "",
+        documento: currentActa.recibidoPorCC || "",
+      });
+
+      setCurrentActa({
+        ...currentActa,
+        recibidoPorFirma: response.firma.firma_url,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Firma guardada",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error subiendo firma",
+      });
+    }
   };
 
   // ✅ Firma entregado
-  const handleFirmaEntregado = (firma: string) => {
-    setCurrentActa({
-      ...currentActa,
-      entregadoPorFirma: firma,
-    });
+  const handleFirmaEntregado = async (firma: string) => {
+    try {
+      if (!currentActa.id) {
+        Swal.fire({
+          icon: "warning",
+          title: "Guarda el acta primero",
+        });
+
+        return;
+      }
+
+      const file = base64ToFile(firma, "firma-entregado.png");
+
+      const response = await firmaService.uploadFirma({
+        firma: file,
+        acta_id: currentActa.id,
+        tipo: "ENTREGADO",
+        nombre: currentActa.entregadoPorNombre || "",
+        documento: currentActa.entregadoPorCC || "",
+      });
+
+      setCurrentActa({
+        ...currentActa,
+        entregadoPorFirma: response.firma.firma_url,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Firma guardada",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error subiendo firma",
+      });
+    }
   };
 
   return (
@@ -48,12 +119,25 @@ const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
         title="Formato Listo para Imprimir"
         subtitle="Imprime este documento, solicita las firmas y cárgalo al sistema."
         onBack={() => navigate("/create")}
-        onSave={() => saveToHistory(currentActa)}
         actions={
           <>
             <button
               onClick={handlePrint}
-              className="bg-white dark:bg-slate-800 border-2 border-gray-900 dark:border-slate-700 text-gray-900 dark:text-white px-8 py-3.5 rounded-2xl flex items-center gap-2 font-black text-sm hover:bg-gray-50 hover:text-blue-600 transition-all"
+              className="
+        px-8 py-3.5 rounded-2xl
+        flex items-center gap-2
+        font-black text-sm
+        transition-all
+
+        bg-[var(--bg-card)]
+        text-[var(--text-main)]
+
+        border-2
+        border-[var(--border-color)]
+
+        hover:scale-[1.02]
+        hover:border-[var(--primary)]
+      "
             >
               <Printer className="w-4 h-4" />
               Imprimir Acta
@@ -61,7 +145,18 @@ const PreviewWrapper: React.FC<PreviewWrapperProps> = ({
 
             <button
               onClick={() => actaId && triggerUpload(actaId)}
-              className="bg-[#003876] dark:bg-blue-600 text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-black text-sm hover:scale-105 transition-all shadow-lg"
+              className="
+        px-8 py-3.5 rounded-2xl
+        flex items-center gap-3
+        font-black text-sm
+        transition-all shadow-lg
+
+        bg-[var(--primary)]
+        text-white
+
+        hover:scale-105
+        hover:bg-[var(--primary-hover)]
+      "
             >
               <FileUp className="w-5 h-5" />
               Ya tengo el Escaneo

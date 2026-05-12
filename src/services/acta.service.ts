@@ -2,7 +2,7 @@ import { ActaData } from "../types/types";
 import { api } from "./api";
 
 // =============================
-// DTO FRONT → BACK (LIMPIO)
+// DTO FRONT → BACK
 // =============================
 export interface ActaPayload {
   fecha: string;
@@ -15,8 +15,10 @@ export interface ActaPayload {
   laptopSerial: string;
   laptopMarcaId?: number;
 
-  accesorios: string;
+  accesorios: string[];
   observaciones: string;
+
+  estado: "ABIERTA" | "CERRADA";
 
   recibidoPorNombre: string;
   recibidoPorCC: string;
@@ -28,6 +30,14 @@ export interface ActaPayload {
 
   diademaMarcaId?: number;
   diademaSerial?: string;
+
+  celular?: {
+    numero: string;
+    imei: string;
+    marca_id: number;
+    operador_id: number;
+    modelo: string;
+  } | null;
 }
 
 // =============================
@@ -39,10 +49,17 @@ interface BackendActa {
   fecha: string;
 
   cargo_id: number;
-  cargo: string;
+
+  // CAMPOS SOLO PARA PREVIEW, NO SE ENVIAN AL BACK
+  cargo?: string;
+  sede?: string;
+  celular_marca_nombre?: string;
+  celular_operador_nombre?: string;
+  diadema_marca_nombre?: string;
+  laptop_marca_nombre?: string;
+  // ----------------------------
 
   sede_id: number;
-  sede: string;
 
   equipo: string;
 
@@ -50,7 +67,7 @@ interface BackendActa {
   laptop_marca_id?: number;
 
   accesorios: string;
-  estado: string;
+  estado: "ABIERTA" | "CERRADA";
   observaciones: string;
 
   recibido_por_nombre: string;
@@ -63,6 +80,12 @@ interface BackendActa {
 
   diadema_serial?: string;
   diadema_marca_id?: number;
+
+  celular_numero?: string;
+  celular_imei?: string;
+  celular_marca_id?: number;
+  celular_operador_id?: number;
+  celular_modelo?: string;
 }
 
 // =============================
@@ -75,18 +98,28 @@ const mapBackendToActaData = (data: BackendActa): ActaData => ({
   fecha: data.fecha,
 
   cargoId: data.cargo_id,
+
+  // CAMPOS SOLO PARA PREVIEW, NO SE ENVIAN AL BACK
   cargo: data.cargo,
+  sede: data.sede,
+  celularMarcaNombre: data.celular_marca_nombre,
+  celularOperadorNombre: data.celular_operador_nombre,
+  diademaMarcaNombre: data.diadema_marca_nombre,
+  laptopMarcaNombre: data.laptop_marca_nombre,
+  // ----------------------------
 
   sedeId: data.sede_id,
-  sede: data.sede,
 
   equipo: data.equipo,
 
   laptopSerial: data.laptop_serial,
   laptopMarcaId: data.laptop_marca_id ?? undefined,
 
-  accesorios: data.accesorios,
-  estado: data.estado,
+  accesorios: data.accesorios
+    ? data.accesorios.split(", ").map((acc) => acc.trim())
+    : [],
+  estado: data.estado as "ABIERTA" | "CERRADA",
+
   observaciones: data.observaciones,
 
   recibidoPorNombre: data.recibido_por_nombre,
@@ -99,6 +132,12 @@ const mapBackendToActaData = (data: BackendActa): ActaData => ({
 
   diademaSerial: data.diadema_serial ?? undefined,
   diademaMarcaId: data.diadema_marca_id ?? undefined,
+
+  celularNumero: data.celular_numero ?? "",
+  celularImei: data.celular_imei ?? "",
+  celularMarcaId: data.celular_marca_id ?? undefined,
+  celularOperadorId: data.celular_operador_id ?? undefined,
+  celularModelo: data.celular_modelo ?? "",
 });
 
 // =============================
@@ -117,8 +156,10 @@ const mapPayloadToBackend = (payload: ActaPayload) => {
     laptopSerial: payload.laptopSerial,
     laptopMarcaId: payload.laptopMarcaId ?? null,
 
-    accesorios: payload.accesorios,
+    accesorios: payload.accesorios.join(", "),
     observaciones: payload.observaciones,
+
+    estado: payload.estado,
 
     recibidoPorNombre: payload.recibidoPorNombre,
     recibidoPorCC: payload.recibidoPorCC,
@@ -130,6 +171,8 @@ const mapPayloadToBackend = (payload: ActaPayload) => {
 
     diademaMarcaId: payload.diademaMarcaId ?? null,
     diademaSerial: payload.diademaSerial ?? null,
+
+    celular: payload.celular ?? null,
   };
 
   // 🔍 DEBUG CLAVE
@@ -154,7 +197,7 @@ export const actaService = {
   // LISTADO
   getActas: async (page = 1, limit = 10, search = "") => {
     const response = await api.get(
-      `/actas?page=${page}&limit=${limit}&search=${search}`
+      `/actas?page=${page}&limit=${limit}&search=${search}`,
     );
 
     return {
@@ -172,12 +215,21 @@ export const actaService = {
   // UPDATE
   updateActa: async (
     id: string | number,
-    payload: ActaPayload
+    payload: ActaPayload,
   ): Promise<ActaData> => {
     const mapped = mapPayloadToBackend(payload);
 
     const raw = await api.put(`/actas/${id}`, mapped);
 
+    return mapBackendToActaData(raw);
+  },
+
+  // ACTUALIZAR ESTADO DE ACTA
+  updateEstado: async (
+    id: number,
+    estado: "ABIERTA" | "CERRADA",
+  ): Promise<ActaData> => {
+    const raw = await api.patch(`/actas/${id}/estado`, { estado });
     return mapBackendToActaData(raw);
   },
 };

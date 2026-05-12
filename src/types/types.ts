@@ -1,4 +1,3 @@
-
 export interface ActaData {
   id: number;
   actaNumber: string;
@@ -8,18 +7,26 @@ export interface ActaData {
   recibidoPorCC: string;
 
   cargoId?: number;
-  cargo: string;
+
+  // CAMPOS SOLO PARA PREVIEW, NO SE ENVIAN AL BACK
+  cargo?: string;
+  sede?: string;
+  celularMarcaNombre?: string;
+  celularOperadorNombre?: string;
+  diademaMarcaNombre?: string;
+  laptopMarcaNombre?: string;
+  // ----------------------------
 
   sedeId?: number;
-  sede: string;
-  
+
   equipo: string;
 
   laptopMarcaId?: number;
-  laptopSerial: string; 
+  laptopSerial: string;
 
-  accesorios: string;
-  estado: string;
+  accesorios: string[];
+
+  estado: "ABIERTA" | "CERRADA";
   observaciones: string;
 
   entregadoPorNombre?: string;
@@ -28,7 +35,6 @@ export interface ActaData {
 
   fechaDevolucion?: string;
   recibidoPorDevolucion?: string;
-
 
   driveFileId?: string;
   scannedFileName?: string;
@@ -41,8 +47,9 @@ export interface ActaData {
 
   celularNumero?: string;
   celularImei?: string;
-  celularMarca?: string;
+  celularMarcaId?: number;
   celularOperadorId?: number;
+  celularModelo?: string;
 }
 
 type User = {

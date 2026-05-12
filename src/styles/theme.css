@@ -140,3 +140,28 @@ body {
 .content-search-limit{
   margin-right: 10px;
 }
+.card{
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.btn-card {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.btn-card:hover {
+  background: var(--bg-logo);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+.estado-abierta {
+  background: rgba(22,163,74,0.15);
+  color: var(--success);
+}
+
+.estado-cerrada {
+  background: rgba(249,115,22,0.15);
+  color: #f97316;
+}

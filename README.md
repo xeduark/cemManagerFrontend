@@ -190,3 +190,9 @@ Una vez generado y subido el PDF:
 ---
 
 **CEM – Gestión profesional, clara y auditable de actas institucionales.**
+
+## Contacto
+
+**Jorge Eduardo Muñoz Quintero**\
+*Desarrollador principal*\
+Eduard.munoz@comitedeestudiosmedicos.com | xeduark@gmail.com
