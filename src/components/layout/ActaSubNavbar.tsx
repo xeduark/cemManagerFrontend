@@ -18,7 +18,7 @@ const ActaSubNavbar: React.FC<ActaSubNavbarProps> = ({
       className="
         flex flex-col md:flex-row
         justify-between items-center
-        gap-6 mb-10 no-print
+        gap-6 mb-10 mt-10 no-print
 
         rounded-[2.5rem]
         p-8

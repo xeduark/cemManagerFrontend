@@ -1,6 +1,5 @@
-import Card from "../ui/Card";
+import React from "react";
 import { ActaData } from "@/types/types";
-import ActaHeader from "../ui/ActaHeader";
 
 interface Props {
   acta: ActaData;
@@ -8,47 +7,92 @@ interface Props {
 }
 
 const ActaCard: React.FC<Props> = ({ acta, onView }) => {
+  // Pon aquí el enlace directo de tu logo en Cloudinary
+  const logoUrl = "https://res.cloudinary.com/decmvewpj/image/upload/v1778729030/COMITE_DE_ESTUDIOS_MEDICOS_xjdyzk.png"; 
+
   return (
-    <Card>
-      {/* HEADER SOLO VISUAL */}
-      <ActaHeader
-        title={`#${acta.actaNumber}`}
-        subtitle={acta.fecha}
-        estado={acta.estado}
-      />
-
-      {/* NOMBRE */}
-      <h4 className="font-bold text-lg" style={{ color: "var(--text-main)" }}>
-        {acta.recibidoPorNombre}
-      </h4>
-
-      {/* EQUIPO */}
-      <div
-        className="rounded-xl p-4 mt-4"
-        style={{
-          background: "var(--bg-input)",
-          border: "1px solid var(--border-color)",
-        }}
-      >
-        <span className="block text-[10px] font-bold uppercase mb-1">
-          Equipo
-        </span>
-
-        <span className="text-sm font-semibold">
-          {acta.equipo || "No especificado"}
-        </span>
+    <div className="nike-style-card mx-auto">
+      
+      {/* 1. BARRA SUPERIOR: Muestra el Estado fijo arriba de todo */}
+      <div className="card-top-bar">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
+            {acta.estado}
+          </span>
+          <span className={`w-3 height-3 w-3 h-3 rounded-full inline-block ${
+            acta.estado.toLowerCase() === 'abierta' ? 'bg-green-500' : 'bg-orange-500'
+          }`} />
+        </div>
       </div>
 
-      {/* BOTÓN */}
-      <div className="mt-6">
-        <button
-          onClick={() => onView(acta)}
-          className="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide btn-card"
-        >
-          Ver Acta
-        </button>
+      {/* 2. BLOQUE CENTRAL: El contenedor del logo (Sube con el Hover) */}
+      <div className="image-block border-y" style={{ borderColor: "var(--border-color-card)" }}>
+        
+        {/* Lado Izquierdo: Textos de Identificación */}
+        <div className="flex flex-col justify-center">
+          <h3 className="acta-number-text font-black text-xl tracking-tight leading-none mt-1">
+            {`#${acta.actaNumber}`}
+          </h3>
+        </div>
+
+        {/* Lado Derecho: Imagen del Logo (Equivalente al Charizard) */}
+        <div className="w-1/2 h-full flex items-center justify-center p-2">
+          <img 
+            src={logoUrl} 
+            alt="Logo Corporativo" 
+            className="logo-cem max-w-full max-h-[100px] object-contain drop-shadow-md"
+          />
+        </div>
+
       </div>
-    </Card>
+
+      {/* 3. BLOQUE INFERIOR: Se despliega exponiendo los datos y el botón */}
+      <div className="content-block flex flex-col justify-end">
+        
+        {/* REVEAL 1: Nombre del responsable */}
+        <div className="text-center delay-reveal reveal-1">
+          <h4 className="font-extrabold text-base tracking-tight" style={{ color: "var(--text-main)" }}>
+            {acta.recibidoPorNombre}
+          </h4>
+        </div>
+
+        {/* REVEAL 2: Tabla de especificaciones (Estilo Hue / Sat / Lum de tu imagen) */}
+        <div className="grid grid-cols-2 gap-2 mt-3 delay-reveal reveal-2 text-center">
+          <div className="p-2 rounded-lg" style={{ background: "var(--bg-input)" }}>
+            <span className="block text-[9px] font-bold uppercase tracking-wider opacity-60" style={{ color: "var(--text-main)" }}>
+              Equipo
+            </span>
+            <span className="text-xs font-bold block truncate mt-0.5" style={{ color: "var(--text-main)" }}>
+              {acta.equipo || "N/A"}
+            </span>
+          </div>
+          
+          <div className="p-2 rounded-lg" style={{ background: "var(--bg-input)" }}>
+            <span className="block text-[9px] font-bold uppercase tracking-wider opacity-60" style={{ color: "var(--text-main)" }}>
+              Fecha
+            </span>
+            <span className="text-xs font-bold block mt-0.5" style={{ color: "var(--text-main)" }}>
+              {acta.fecha}
+            </span>
+          </div>
+        </div>
+
+        {/* REVEAL 3: Botón de apertura final */}
+        <div className="mt-4 delay-reveal reveal-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(acta);
+            }}
+            className="w-full py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider btn-card"
+          >
+            Ver Detalles
+          </button>
+        </div>
+
+      </div>
+
+    </div>
   );
 };
 

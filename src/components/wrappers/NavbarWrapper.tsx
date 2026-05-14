@@ -6,14 +6,22 @@ import { View } from "../../types/types";
 interface NavbarWrapperProps {
   theme: "light" | "dark";
   toggleTheme: () => void;
+  onNewActa: () => void;
 }
 
-const NavbarWrapper: React.FC<NavbarWrapperProps> = ({ theme, toggleTheme }) => {
+const NavbarWrapper: React.FC<NavbarWrapperProps> = ({
+  theme,
+  toggleTheme,
+  onNewActa,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
-// Funciones para manejar la navegación
+  // Funciones para manejar la navegación
   const handleDashboard = () => navigate("/actas");
-  const handleNewActa = () => navigate("/create");
+  const handleNewActa = () => {
+    onNewActa();
+    navigate("/create");
+  };
 
   // Mapear la ruta actual a un View válido
   let view: View;

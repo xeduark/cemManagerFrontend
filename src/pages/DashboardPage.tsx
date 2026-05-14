@@ -4,6 +4,7 @@ import { ActaData } from "../types/types";
 import { actaService } from "../services/acta.service";
 import ActaCard from "@/components/ui/ActaCard";
 import { useState, useEffect } from "react";
+import BookLoader from "@/components/ui/BookLoader";
 interface DashboardPageProps {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
@@ -68,14 +69,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
           searchTerm,
         );
 
+        // Guardamos el momento exacto en que inicia la carga
+    const startTime = Date.now();
+    const MINIMUM_MS = 3000; // 3 segundos obligatorios para ver el libro
+
+      // Calculamos cuánto tiempo ha pasado realmente
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, MINIMUM_MS - elapsedTime);
+
+      // Esperamos el tiempo restante antes de renderizar las actas
+      setTimeout(() => {
         setActas(result.data);
         setTotalPages(result.totalPages);
-      } catch (error) {
-        console.error(error);
-      } finally {
         setLoading(false);
-      }
-    };
+      }, remainingTime);
+
+    } catch (error) {
+      console.error(error);
+      setLoading(false); // Apaga el loader de inmediato si hay un error de red
+    }
+  };
+
 
     fetchActas();
   }, [page, itemsPerPage, searchTerm]);
@@ -125,11 +139,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
       {loading && actas.length === 0 ? (
-        // Loader inicial
-        <div className="flex flex-col justify-center items-center py-20 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          <span className="text-sm text-gray-400">Cargando actas...</span>
-        </div>
+        // Loader de Libro Animado Independiente
+        <BookLoader />
       ) : actas.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-slate-800 p-24 text-center">
           <div className="bg-blue-50 dark:bg-blue-900/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -151,11 +162,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {actas.map((acta) => (
-            <ActaCard
-              key={acta.id}
-              acta={acta}
-              onView={onViewActa}
-            />
+            <ActaCard key={acta.id} acta={acta} onView={onViewActa} />
           ))}
         </div>
       )}

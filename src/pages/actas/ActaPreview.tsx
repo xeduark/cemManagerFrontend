@@ -50,11 +50,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
           </button>
         </div>
 
-        <SignaturePad
-          label={label}
-          onSave={onSave}
-          onClear={onClear}
-        />
+        <SignaturePad label={label} onSave={onSave} onClear={onClear} />
       </div>
     </div>
   );
@@ -86,10 +82,7 @@ const buildAccesorios = (data: ActaData) => {
       }
 
       if (acc === "DIADEMAS") {
-        return `DIADEMAS (${[
-          data.diademaMarcaNombre,
-          data.diademaSerial,
-        ]
+        return `DIADEMAS (${[data.diademaMarcaNombre, data.diademaSerial]
           .filter(Boolean)
           .join(" // ")})`;
       }
@@ -110,7 +103,6 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
   return (
     <>
       <div className="paper w-full max-w-[800px] mx-auto bg-white p-[40px] shadow-2xl border border-gray-200 text-[12px] font-sans leading-relaxed min-h-[1050px] relative text-black">
-
         {/* HEADER */}
         <table className="w-full border-collapse border border-black mb-6">
           <tbody>
@@ -170,9 +162,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
         <div className="mb-4 font-bold flex justify-between">
           <span>FECHA: {safe(data.fecha)}</span>
 
-          <span className="text-gray-400">
-            # {safe(data.actaNumber)}
-          </span>
+          <span className="text-gray-400"># {safe(data.actaNumber)}</span>
         </div>
 
         {/* CAMPOS */}
@@ -183,9 +173,7 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
             ["Sede", data.sede],
             [
               "Equipo",
-              [data.laptopMarcaNombre, data.equipo]
-                .filter(Boolean)
-                .join(" "),
+              [data.laptopMarcaNombre, data.equipo].filter(Boolean).join(" "),
             ],
             ["Serial", data.laptopSerial],
             ["Accesorios", buildAccesorios(data)],
@@ -225,7 +213,6 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
                     className="max-h-24"
                     alt="firma recibido"
                   />
-
                   <button
                     onClick={() => setOpenFirmaRecibido(true)}
                     className="text-xs text-blue-600 mt-2 font-semibold"
@@ -272,7 +259,6 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
                     className="max-h-24"
                     alt="firma entrega"
                   />
-
                   <button
                     onClick={() => setOpenFirmaEntregado(true)}
                     className="text-xs text-blue-600 mt-2 font-semibold"
@@ -316,30 +302,29 @@ const ActaPreview: React.FC<ActaPreviewProps> = ({
         </div>
       </div>
 
-      {/* MODAL RECIBIDO */}
+      {/* MODALES DE FIRMA COMPATIBLES CON HTML2CANVAS */}
       <SignatureModal
         open={openFirmaRecibido}
         title="Firma de Recibido"
-        label="Firma quien recibe"
+        label="Firme aquí"
         onClose={() => setOpenFirmaRecibido(false)}
         onSave={(firma) => {
-          onSaveFirmaRecibido?.(firma);
+          if (onSaveFirmaRecibido) onSaveFirmaRecibido(firma);
           setOpenFirmaRecibido(false);
         }}
-        onClear={() => onSaveFirmaRecibido?.("")}
+        onClear={() => {}}
       />
 
-      {/* MODAL ENTREGADO */}
       <SignatureModal
         open={openFirmaEntregado}
         title="Firma de Entregado"
-        label="Firma quien entrega"
+        label="Firme aquí"
         onClose={() => setOpenFirmaEntregado(false)}
         onSave={(firma) => {
-          onSaveFirmaEntregado?.(firma);
+          if (onSaveFirmaEntregado) onSaveFirmaEntregado(firma);
           setOpenFirmaEntregado(false);
         }}
-        onClear={() => onSaveFirmaEntregado?.("")}
+        onClear={() => {}}
       />
     </>
   );

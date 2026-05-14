@@ -41,6 +41,10 @@ const App: React.FC = () => {
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
+  const handleNewActa = () => {
+    setCurrentActa(INITIAL_ACTA_DATA);
+  };
+
   const saveToHistory = (acta: ActaData) => {
     const exists = history.find((h) => h.id === acta.id);
     const updated = exists
@@ -62,7 +66,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <NavbarWrapper theme={theme} toggleTheme={toggleTheme} />
+      <NavbarWrapper theme={theme} toggleTheme={toggleTheme} onNewActa={handleNewActa} />
       <input
         type="file"
         ref={fileInputRef}
@@ -73,15 +77,10 @@ const App: React.FC = () => {
           if (!file || !uploadingForId) return;
           setIsUploading(true);
           const targetActa =
-            history.find((h) => h.id === uploadingForId) || currentActa;
+            history.find((h) => h.id === Number(uploadingForId)) || currentActa;
           const result = await backendService.saveActa(targetActa, file);
           if (result.success) {
-            saveToHistory({
-              ...targetActa,
-              status: "uploaded",
-              driveFileId: result.driveId,
-              scannedFileName: file.name,
-            });
+            saveToHistory(targetActa);
           }
           setIsUploading(false);
           setUploadingForId(null);
